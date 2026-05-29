@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<title>PadDeck</title>
+<title>Audiomastor</title>
+<meta name="apple-mobile-web-app-title" content="Audiomastor" />
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0IiByeD0iMTEiIGZpbGw9IiNmZjdhNDUiLz48dGV4dCB4PSIyNCIgeT0iMjIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNyIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzFhMTIwNiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QU08L3RleHQ+PGcgZmlsbD0iIzFhMTIwNiI+PHJlY3QgeD0iMTMiIHk9IjMwIiB3aWR0aD0iMyIgaGVpZ2h0PSI2IiByeD0iMS41Ii8+PHJlY3QgeD0iMTkiIHk9IjI3IiB3aWR0aD0iMyIgaGVpZ2h0PSIxMiIgcng9IjEuNSIvPjxyZWN0IHg9IjI1LjUiIHk9IjI5IiB3aWR0aD0iMyIgaGVpZ2h0PSI4IiByeD0iMS41Ii8+PHJlY3QgeD0iMzIiIHk9IjI2IiB3aWR0aD0iMyIgaGVpZ2h0PSIxNCIgcng9IjEuNSIvPjwvZz48L3N2Zz4=">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0IiByeD0iMTEiIGZpbGw9IiNmZjdhNDUiLz48dGV4dCB4PSIyNCIgeT0iMjIiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNyIgZm9udC13ZWlnaHQ9IjcwMCIgZmlsbD0iIzFhMTIwNiIgdGV4dC1hbmNob3I9Im1pZGRsZSI+QU08L3RleHQ+PGcgZmlsbD0iIzFhMTIwNiI+PHJlY3QgeD0iMTMiIHk9IjMwIiB3aWR0aD0iMyIgaGVpZ2h0PSI2IiByeD0iMS41Ii8+PHJlY3QgeD0iMTkiIHk9IjI3IiB3aWR0aD0iMyIgaGVpZ2h0PSIxMiIgcng9IjEuNSIvPjxyZWN0IHg9IjI1LjUiIHk9IjI5IiB3aWR0aD0iMyIgaGVpZ2h0PSI4IiByeD0iMS41Ii8+PHJlY3QgeD0iMzIiIHk9IjI2IiB3aWR0aD0iMyIgaGVpZ2h0PSIxNCIgcng9IjEuNSIvPjwvZz48L3N2Zz4=">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&family=Chivo:wght@400;500;700&family=Fraunces:wght@400;500;600&family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -33,6 +36,8 @@
   }
   .brand{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-.02em; }
   .brand .dot{ width:11px; height:11px; border-radius:50%; background:var(--accent); }
+  .brand .logo{ width:30px; height:30px; display:inline-flex; }
+  .brand .logo svg{ width:30px; height:30px; display:block; }
   .page-title{ color:var(--dim); font-weight:500; font-size:13px; }
   nav{ display:flex; gap:6px; }
   nav button{
@@ -91,7 +96,15 @@
     background:rgba(0,0,0,.25); border:none; display:grid; place-items:center; opacity:0; transition:.15s;
   }
   .pad .gear svg{ width:15px; height:15px; stroke:var(--text); }
-  .pad:hover .gear{ opacity:.85; }
+  .pad .gear{ opacity:.55; }
+  .pad:hover .gear{ opacity:.95; }
+  .pad.loadable{ cursor:pointer; border-style:dashed; border-color:var(--accent); }
+  .pad.loadable .empty svg, .pad.loadable .empty{ color:var(--accent); stroke:var(--accent); }
+  .pad .vu{ position:absolute; right:8px; top:30px; bottom:30px; width:8px; border-radius:4px; overflow:hidden; display:none;
+    background:linear-gradient(to top,#3ddc97 0%,#3ddc97 48%,#f5c518 70%,#ff5d5d 92%);
+    box-shadow:inset 0 0 0 1px rgba(127,127,127,.3); }
+  .pad.playing .vu{ display:block; }
+  .pad .vu > i{ position:absolute; left:0; right:0; top:0; height:100%; background:var(--surface); }
   .pad.loaded{ cursor:pointer; }
   .pad.loaded:active{ transform:scale(.97); }
   .pad.playing{ box-shadow:inset 0 0 0 2px var(--accent), 0 0 22px -4px var(--accent); }
@@ -131,6 +144,11 @@
   .nowplaying{ text-align:center; margin-bottom:6px; }
   .nowplaying .ti{ font-weight:600; font-size:16px; }
   .nowplaying .sub{ color:var(--dim); font-size:12px; }
+  .pad-wave-wrap{ position:relative; height:64px; margin:4px 0 2px; border-radius:10px; background:var(--surface2); overflow:hidden; touch-action:none; cursor:pointer; }
+  #padWaveCanvas{ position:absolute; inset:0; width:100%; height:100%; }
+  .pad-playhead{ position:absolute; top:0; bottom:0; width:2px; background:var(--accent); left:0; pointer-events:none; display:none; }
+  .seek-times{ display:flex; justify-content:space-between; }
+  .seek-times span{ font-family:var(--font-mono); font-size:12px; color:var(--dim); }
 
   /* ---- DAW ---- */
   .daw-wrap{ display:flex; height:100%; min-height:0; }
@@ -219,6 +237,7 @@
   nav button:first-child{ margin-left:0; }
   .brand{ gap:0; }
   .brand .dot{ margin-right:9px; }
+  .brand .logo{ margin-right:10px; }
   .brand .page-title{ margin-left:8px; }
   .sheet-actions{ gap:0; }
   .sheet-actions .btn{ margin-right:10px; }
@@ -253,7 +272,7 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><span class="dot"></span>PadDeck <span class="page-title" id="pageTitle">Pads</span></div>
+    <div class="brand"><span class="logo"><svg viewBox="0 0 48 48"><rect x="2" y="2" width="44" height="44" rx="11" fill="var(--accent)"/><text x="24" y="22" font-size="17" font-weight="700" fill="var(--accent-text)" text-anchor="middle" font-family="var(--font-ui)">AM</text><g fill="var(--accent-text)"><rect x="13" y="30" width="3" height="6" rx="1.5"/><rect x="19" y="27" width="3" height="12" rx="1.5"/><rect x="25.5" y="29" width="3" height="8" rx="1.5"/><rect x="32" y="26" width="3" height="14" rx="1.5"/></g></svg></span>Audiomastor <span class="page-title" id="pageTitle">Pads</span></div>
     <nav id="nav">
       <button data-page="pads" class="on" aria-label="Pads"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
       <button data-page="playlist" aria-label="Playlist"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="15" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="11" y2="18"/><circle cx="18" cy="16" r="3"/><line x1="21" y1="16" x2="21" y2="7"/></svg></button>
@@ -266,24 +285,25 @@
     <!-- PADS -->
     <section class="page on" id="page-pads">
       <div class="bar">
-        <button class="btn icon" id="fadeBtn" title="Fade out playing audio"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 18 L20 6"/><path d="M4 18 L20 18"/></svg></button>
-        <button class="btn icon" id="stopAllBtn" title="Stop all"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+        <button class="btn" id="importBtn" title="Show Load buttons to add audio to pads"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 15V3M8 7l4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>Import audios</button>
         <button class="btn" id="rearrangeBtn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Rearrange</button>
-        <button class="btn" id="fadeInBtn" title="Start pads with a fade in"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 16v3M9 12v7M15 8v11M21 4v15"/></svg>Fade in</button>
-        <div class="spacer"></div>
-        <div class="vol">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M19 5a9 9 0 0 1 0 14M15.5 8.5a4 4 0 0 1 0 7"/></svg>
-          <input type="range" id="masterVol" min="0" max="1" step="0.01" value="1">
-        </div>
+        <button class="btn" id="fadeInBtn" title="Start pads with a fade in"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 16v3M9 12v7M15 8v11M21 4v15"/></svg>Start with fade in</button>
       </div>
       <div class="rearrange-hint" id="rearrangeHint" style="display:none">Drag pads to reorder · tap Rearrange again when done</div>
+      <div class="rearrange-hint" id="importHint" style="display:none">Tap an empty pad to load audio · tap “Import audios” again when done</div>
       <div class="scroll" style="padding:0"><div id="padGrid"></div></div>
       <div class="player bar bottom" id="padPlayer" style="flex-direction:column; align-items:stretch;">
-        <div class="nowplaying"><div class="ti" id="padNowTitle">No pad playing</div><div class="sub" id="padNowSub"></div></div>
-        <div class="seek"><span class="t" id="padCur">0:00</span><input type="range" id="padSeek" min="0" max="100" value="0" step="0.1"><span class="t" id="padDur">0:00</span></div>
+        <div class="nowplaying"><div class="ti" id="padNowTitle">No pad playing</div><div class="sub" id="padNowSub">Tap a pad to play</div></div>
+        <div class="pad-wave-wrap" id="padWaveWrap"><canvas id="padWaveCanvas"></canvas><div class="pad-playhead" id="padPlayhead"></div></div>
+        <div class="seek-times"><span id="padCur">0:00</span><span id="padDur">0:00</span></div>
         <div class="transport">
+          <button class="btn icon round" id="fadeBtn" title="Fade out all"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 18 L20 6"/><path d="M4 18 L20 18"/></svg></button>
           <button class="btn icon round primary play" id="padPlay"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg></button>
-          <button class="btn icon round" id="padStopBtn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+          <button class="btn icon round" id="padStopBtn" title="Stop all"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+        </div>
+        <div class="vol" style="margin-top:12px; align-self:center;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M19 5a9 9 0 0 1 0 14M15.5 8.5a4 4 0 0 1 0 7"/></svg>
+          <input type="range" id="masterVol" min="0" max="1" step="0.01" value="1" style="width:170px">
         </div>
       </div>
     </section>
@@ -389,7 +409,7 @@
           <div class="opt-row" style="border-bottom:none"><div><div style="font-weight:500">Clear everything</div><div class="desc">Removes all pads, songs &amp; tracks</div></div>
             <button class="btn ghost" id="clearAll" style="color:#ff6b6b; border-color:#5a2a2a">Clear all</button></div>
         </div>
-        <div style="text-align:center; color:var(--dim); font-size:12px; padding:10px 0 30px;">PadDeck · runs fully offline on your device</div>
+        <div style="text-align:center; color:var(--dim); font-size:12px; padding:10px 0 30px;">Audiomastor · runs fully offline on your device</div>
       </div>
     </section>
   </main>
@@ -505,9 +525,9 @@ const state = {
   pads:[],        // 24 pad objects
   playlist:[],    // playlist items
   daw:[],         // daw tracks
-  rearrange:false,
+  rearrange:false, importMode:false,
   // pads runtime
-  activePad:-1, padRaf:0,
+  activePad:-1, padRaf:0, padScrubbing:false, padScrubFrac:0,
   // playlist runtime
   plIndex:-1, plRepeat:"off", plShuffle:false,
   // daw runtime
@@ -568,6 +588,7 @@ function goPage(p){
   $$("#nav button").forEach(b=>b.classList.toggle("on", b.dataset.page===p));
   $("#pageTitle").textContent = TITLES[p];
   if(p==="daw" && state.dawSel>=0){ drawWave(); updateRegionUI(); }
+  if(p==="pads") drawPadWave();
 }
 $("#nav").addEventListener("click", e=>{ const b=e.target.closest("button"); if(b) goPage(b.dataset.page); });
 
@@ -587,7 +608,7 @@ function renderPads(){
   padGrid.innerHTML = "";
   state.pads.forEach((p,i)=>{
     const el = document.createElement("div");
-    el.className = "pad" + (p.buffer?" loaded":"") + (p.playing?" playing":"");
+    el.className = "pad" + (p.buffer?" loaded":"") + (p.playing?" playing":"") + (!p.buffer && state.importMode?" loadable":"");
     el.dataset.i = i;
     el.style.setProperty("--accent-pad", p.color);
     let inner = `<span class="num">${String(i+1).padStart(2,"0")}</span>`;
@@ -596,10 +617,11 @@ function renderPads(){
       inner += `<div class="name">${escapeHtml(p.name|| (p.fileName?p.fileName.replace(/\.[^.]+$/,""):"Pad "+(i+1)))}</div>`;
       inner += `<div class="pdur">${fmt(p.buffer.duration)}${p.loop?' &middot; loop':''}</div>`;
       inner += `<span class="swatch" style="background:${p.color}"></span>`;
-    } else {
+      inner += `<div class="vu"><i></i></div>`;
+      inner += `<button class="gear" data-gear="${i}"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="2.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></button>`;
+    } else if(state.importMode){
       inner += `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Load</div>`;
     }
-    inner += `<button class="gear" data-gear="${i}"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="2.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></button>`;
     el.innerHTML = inner;
     if(p.playing){ el.style.boxShadow=`inset 0 0 0 2px ${p.color}, 0 0 22px -4px ${p.color}`; const f=el.querySelector(".padfill"); if(f) f.style.background=p.color; }
     padGrid.appendChild(el);
@@ -607,15 +629,23 @@ function renderPads(){
 }
 function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
-/* tap handling: play, or open settings via gear */
+/* tap handling: play loaded pads, load empty pads only in import mode, gear edits */
 padGrid.addEventListener("click", e=>{
   if(state.rearrange) return;
   const gear = e.target.closest("[data-gear]");
   if(gear){ openPadSheet(+gear.dataset.gear); return; }
   const padEl = e.target.closest(".pad"); if(!padEl) return;
   const i = +padEl.dataset.i;
-  if(state.pads[i].buffer) triggerPad(i); else openPadSheet(i);
+  if(state.pads[i].buffer) triggerPad(i);
+  else if(state.importMode) loadIntoPad(i);
 });
+function loadIntoPad(i){
+  pickFile(false, async files=>{
+    const f=files[0]; const p=state.pads[i];
+    try{ const buf=await decodeBlob(f); p.buffer=buf; p.fileName=f.name; await DB.put(p.id, f); saveMeta(); renderPads(); }
+    catch(e){ alert("Could not read that audio file."); }
+  });
+}
 
 const PLAY_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg>`;
 const PAUSE_ICON = `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`;
@@ -627,11 +657,14 @@ function startPadSource(i, offset, useFade){
   const g=actx.createGain(); const now=actx.currentTime;
   if(useFade){ const ft=state.settings.fadeTime; g.gain.setValueAtTime(0.0001, now); g.gain.linearRampToValueAtTime(Math.max(0.0001,p.gain), now+ft); }
   else g.gain.setValueAtTime(p.gain, now);
-  src.connect(g); g.connect(master);
+  src.connect(g);
+  const an=actx.createAnalyser(); an.fftSize=256; an.smoothingTimeConstant=0.3;
+  g.connect(an); an.connect(master);
+  p.analyser=an; p.meterBuf=new Uint8Array(an.fftSize); p.meterVal=0;
   src.start(0, offset||0);
   p.source=src; p.gainNode=g; p.playing=true; p.pausedAt=null;
   p.startCtx=now; p.startOffset=offset||0;
-  src.onended=()=>{ if(p.source===src){ p.source=null; p.gainNode=null; p.playing=false; p.pausedAt=null; renderPads(); if(state.activePad===i) updatePadPlayer(); maybeStopTick(); } };
+  src.onended=()=>{ if(p.source===src){ try{ g.disconnect(); an.disconnect(); }catch(e){} p.source=null; p.gainNode=null; p.analyser=null; p.playing=false; p.pausedAt=null; renderPads(); if(state.activePad===i) updatePadPlayer(); maybeStopTick(); } };
 }
 function padPos(p){
   if(!p||!p.buffer) return 0;
@@ -651,10 +684,10 @@ function triggerPad(i){
   }
   if(state.settings.exclusive){ state.pads.forEach((q,j)=>{ if(j!==i && (q.source||q.pausedAt!=null)) stopPadSource(q); }); }
   startPadSource(i, 0, state.settings.fadeIn);
-  state.activePad=i; startTick();
+  state.activePad=i; startTick(); drawPadWave();
   renderPads(); updatePadPlayer();
 }
-function stopPadSource(p){ try{ if(p.source){ p.source.onended=null; p.source.stop(); } }catch(e){} p.source=null; p.gainNode=null; p.playing=false; p.pausedAt=null; }
+function stopPadSource(p){ try{ if(p.source){ p.source.onended=null; p.source.stop(); } }catch(e){} try{ p.gainNode&&p.gainNode.disconnect(); p.analyser&&p.analyser.disconnect(); }catch(e){} p.source=null; p.gainNode=null; p.analyser=null; p.playing=false; p.pausedAt=null; }
 function stopAllPads(){ state.pads.forEach(p=>stopPadSource(p)); state.activePad=-1; renderPads(); updatePadPlayer(); maybeStopTick(); }
 function fadeOutAll(){
   if(!actx) return;
@@ -671,23 +704,66 @@ function fadeOutAll(){
 }
 
 /* bottom transport (media controls) */
+function drawPadWave(){
+  const wrap=$("#padWaveWrap"), cv=$("#padWaveCanvas");
+  const w=wrap.clientWidth, h=wrap.clientHeight, c=cv.getContext("2d");
+  const dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,w*dpr); cv.height=Math.max(1,h*dpr); c.setTransform(dpr,0,0,dpr,0,0);
+  c.clearRect(0,0,w,h);
+  const i=state.activePad, p=i>=0?state.pads[i]:null;
+  if(!p||!p.buffer||w===0) return;
+  const data=p.buffer.getChannelData(0), mid=h/2, step=Math.max(1,Math.floor(data.length/w));
+  c.fillStyle=(getComputedStyle(document.documentElement).getPropertyValue("--dim")||"#888").trim();
+  for(let x=0;x<w;x++){
+    let mn=1,mx=-1;
+    for(let j=0;j<step;j++){ const v=data[x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
+    const y1=mid+mn*mid*0.9, y2=mid+mx*mid*0.9;
+    c.fillRect(x,y1,1,Math.max(1,y2-y1));
+  }
+}
 function updatePadPlayer(){
   const i=state.activePad; const p = i>=0? state.pads[i]:null;
   const has = !!(p && p.buffer);
   $("#padNowTitle").textContent = has? (p.name|| (p.fileName?p.fileName.replace(/\.[^.]+$/,""):"Pad "+(i+1))) : "No pad playing";
   $("#padNowSub").textContent = has? ("Pad "+(i+1) + (p.loop?" · loop":"")) : "Tap a pad to play";
   const dur = has? p.buffer.duration:0, pos = has? padPos(p):0;
-  $("#padDur").textContent=fmt(dur); $("#padCur").textContent=fmt(pos);
-  if(document.activeElement!==$("#padSeek")) $("#padSeek").value = dur? (pos/dur)*100 : 0;
+  $("#padDur").textContent=fmt(dur);
+  if(!state.padScrubbing){
+    $("#padCur").textContent=fmt(pos);
+    const w=$("#padWaveWrap").clientWidth||1;
+    const ph=$("#padPlayhead");
+    ph.style.display = has? "block":"none";
+    ph.style.left = (dur? (pos/dur)*w : 0)+"px";
+  }
   $("#padPlay").innerHTML = (has && p.source)? PAUSE_ICON : PLAY_ICON;
 }
-function startTick(){ if(state.padRaf) return; const loop=()=>{ updatePadPlayer(); state.padRaf=requestAnimationFrame(loop); }; state.padRaf=requestAnimationFrame(loop); }
+function padLevel(p){
+  if(!p.analyser||!p.meterBuf) return 0;
+  p.analyser.getByteTimeDomainData(p.meterBuf);
+  let peak=0; const b=p.meterBuf;
+  for(let k=0;k<b.length;k++){ const v=Math.abs(b[k]-128)/128; if(v>peak) peak=v; }
+  return peak;
+}
+function updatePadMeters(){
+  const kids=padGrid.children;
+  state.pads.forEach((p,i)=>{
+    if(!(p.playing && p.source && p.analyser)) return;
+    const peak=padLevel(p);
+    p.meterVal = p.meterVal||0;
+    p.meterVal += (peak - p.meterVal) * (peak>p.meterVal? 0.55 : 0.12);
+    const el=kids[i]; if(!el) return;
+    const mask=el.querySelector(".vu > i"); if(!mask) return;
+    mask.style.height = (100 - clamp(p.meterVal,0,1)*100) + "%";
+  });
+}
+function startTick(){ if(state.padRaf) return; const loop=()=>{ updatePadPlayer(); updatePadMeters(); state.padRaf=requestAnimationFrame(loop); }; state.padRaf=requestAnimationFrame(loop); }
 function maybeStopTick(){ if(!state.pads.some(p=>p.source)){ cancelAnimationFrame(state.padRaf); state.padRaf=0; updatePadPlayer(); } }
 function padPlayPause(){
   ensureAudio();
   let i=state.activePad;
   if(i<0){ i=state.pads.findIndex(p=>p.buffer); if(i<0) return; state.activePad=i; }
   const p=state.pads[i]; if(!p.buffer) return;
+  drawPadWave();
   if(p.source){ const pos=padPos(p); stopPadSource(p); p.pausedAt=pos; renderPads(); updatePadPlayer(); maybeStopTick(); }
   else {
     if(state.settings.exclusive) state.pads.forEach((q,j)=>{ if(j!==i && q.source) stopPadSource(q); });
@@ -704,20 +780,47 @@ function padSeek(frac){
   renderPads(); updatePadPlayer();
 }
 $("#padPlay").addEventListener("click", padPlayPause);
-$("#padStopBtn").addEventListener("click", padStopBtn);
-$("#padSeek").addEventListener("input", e=> padSeek(e.target.value/100));
+$("#padStopBtn").addEventListener("click", stopAllPads);
+
+/* scrub on the waveform to set the start point */
+let padWaveDrag=false;
+function padWaveAt(clientX){
+  const i=state.activePad, p=i>=0?state.pads[i]:null; if(!p||!p.buffer) return;
+  const r=$("#padWaveWrap").getBoundingClientRect();
+  const frac=clamp((clientX-r.left)/r.width,0,1);
+  state.padScrubFrac=frac;
+  $("#padPlayhead").style.display="block";
+  $("#padPlayhead").style.left=(frac*r.width)+"px";
+  $("#padCur").textContent=fmt(frac*p.buffer.duration);
+}
+$("#padWaveWrap").addEventListener("pointerdown", e=>{
+  const i=state.activePad; if(i<0||!state.pads[i].buffer) return;
+  e.preventDefault(); padWaveDrag=true; state.padScrubbing=true;
+  try{ $("#padWaveWrap").setPointerCapture(e.pointerId); }catch(_){}
+  padWaveAt(e.clientX);
+});
+$("#padWaveWrap").addEventListener("pointermove", e=>{ if(padWaveDrag){ e.preventDefault(); padWaveAt(e.clientX); } });
+$("#padWaveWrap").addEventListener("pointerup", e=>{ if(!padWaveDrag) return; padWaveDrag=false; state.padScrubbing=false; padSeek(state.padScrubFrac||0); });
 
 $("#fadeBtn").addEventListener("click", fadeOutAll);
-$("#stopAllBtn").addEventListener("click", stopAllPads);
 $("#masterVol").addEventListener("input", e=>{ state.settings.masterVol=+e.target.value; if(master) master.gain.value=+e.target.value; saveMeta(); });
 $("#fadeInBtn").addEventListener("click", function(){ state.settings.fadeIn=!state.settings.fadeIn; this.classList.toggle("on", state.settings.fadeIn); saveMeta(); });
+$("#importBtn").addEventListener("click", function(){
+  state.importMode=!state.importMode;
+  if(state.importMode && state.rearrange){ state.rearrange=false; $("#rearrangeBtn").classList.remove("on"); $("#rearrangeHint").style.display="none"; }
+  this.classList.toggle("on", state.importMode);
+  $("#importHint").style.display = state.importMode? "block":"none";
+  renderPads();
+});
 
 /* rearrange mode (pointer drag) */
 $("#rearrangeBtn").addEventListener("click", function(){
   state.rearrange = !state.rearrange;
+  if(state.rearrange && state.importMode){ state.importMode=false; $("#importBtn").classList.remove("on"); $("#importHint").style.display="none"; }
   this.classList.toggle("on", state.rearrange);
   $("#rearrangeHint").style.display = state.rearrange? "block":"none";
   if(state.rearrange){ stopAllPads(); }
+  renderPads();
 });
 let drag=null;
 padGrid.addEventListener("pointerdown", e=>{
@@ -1094,7 +1197,7 @@ $$(".overlay").forEach(o=> o.addEventListener("click", e=>{ if(e.target===o) o.c
 
 /* ---------- resume audio on first touch (iOS) ---------- */
 document.addEventListener("pointerdown", ()=>{ try{ ensureAudio(); }catch(e){} }, {once:true});
-window.addEventListener("resize", ()=>{ if(state.page==="daw" && state.dawSel>=0){ drawWave(); updateRegionUI(); } });
+window.addEventListener("resize", ()=>{ if(state.page==="daw" && state.dawSel>=0){ drawWave(); updateRegionUI(); } if(state.page==="pads") drawPadWave(); });
 
 /* ---------- go ---------- */
 loadAll();
