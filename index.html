@@ -105,6 +105,10 @@
     box-shadow:inset 0 0 0 1px rgba(127,127,127,.3); }
   .pad.playing .vu{ display:block; }
   .pad .vu > i{ position:absolute; left:0; right:0; top:0; height:100%; background:var(--surface); }
+  .pad-fader{ position:absolute; left:8px; right:20px; bottom:9px; display:flex; align-items:center; }
+  .pad-fader input[type=range]{ width:100%; height:4px; }
+  .pad-fader input[type=range]::-webkit-slider-thumb{ width:14px; height:14px; }
+  .pad .pdur{ margin-bottom:14px; }
   .pad.loaded{ cursor:pointer; }
   .pad.loaded:active{ transform:scale(.97); }
   .pad.playing{ box-shadow:inset 0 0 0 2px var(--accent), 0 0 22px -4px var(--accent); }
@@ -628,6 +632,7 @@ function renderPads(){
     if(p.buffer){
       inner += `<div class="name">${escapeHtml(p.name|| (p.fileName?p.fileName.replace(/\.[^.]+$/,""):"Pad "+(i+1)))}</div>`;
       inner += `<div class="pdur">${fmt(p.buffer.duration)}${p.loop?' &middot; loop':''}</div>`;
+      inner += `<div class="pad-fader"><input type="range" class="padgain" data-i="${i}" min="0" max="1" step="0.01" value="${p.gain}"></div>`;
       inner += `<span class="swatch" style="background:${p.color}"></span>`;
       inner += `<div class="vu"><i></i></div>`;
       inner += `<button class="gear" data-gear="${i}"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="2.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></button>`;
@@ -644,12 +649,25 @@ function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"
 /* tap handling: play loaded pads, load empty pads only in import mode, gear edits */
 padGrid.addEventListener("click", e=>{
   if(state.rearrange) return;
+  if(e.target.closest(".pad-fader")) return; // fader handled separately
   const gear = e.target.closest("[data-gear]");
   if(gear){ openPadSheet(+gear.dataset.gear); return; }
   const padEl = e.target.closest(".pad"); if(!padEl) return;
   const i = +padEl.dataset.i;
   if(state.pads[i].buffer) triggerPad(i);
   else if(state.importMode) loadIntoPad(i);
+});
+// stop pad-fader gestures from bubbling into pad trigger/drag
+["pointerdown","pointerup","mousedown","touchstart","click"].forEach(ev=>
+  padGrid.addEventListener(ev, e=>{ if(e.target.closest(".pad-fader")) e.stopPropagation(); }, true)
+);
+// live per-pad volume
+padGrid.addEventListener("input", e=>{
+  const sl=e.target.closest(".padgain"); if(!sl) return;
+  const i=+sl.dataset.i; const p=state.pads[i]; if(!p) return;
+  p.gain=+sl.value;
+  if(p.gainNode){ try{ p.gainNode.gain.setTargetAtTime(p.gain, actx.currentTime, 0.02); }catch(_){ p.gainNode.gain.value=p.gain; } }
+  saveMeta();
 });
 function loadIntoPad(i){
   pickFile(false, async files=>{
@@ -1206,8 +1224,14 @@ $("#cfNo").addEventListener("click", ()=>{ $("#confirmSheet").classList.remove("
 $("#cfYes").addEventListener("click", ()=>{ $("#confirmSheet").classList.remove("on"); if(cfCb) cfCb(); cfCb=null; });
 $$(".overlay").forEach(o=> o.addEventListener("click", e=>{ if(e.target===o) o.classList.remove("on"); }));
 
-/* ---------- resume audio on first touch (iOS) ---------- */
-document.addEventListener("pointerdown", ()=>{ try{ ensureAudio(); }catch(e){} }, {once:true});
+/* ---------- keep audio alive across backgrounding (iOS) ---------- */
+function resumeAudio(){ try{ if(actx && actx.state!=="running") actx.resume(); }catch(e){} }
+// resume on every interaction (not just the first)
+["pointerdown","touchstart","keydown"].forEach(ev=> document.addEventListener(ev, resumeAudio, {passive:true}));
+// resume when the app comes back to the foreground
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) resumeAudio(); });
+window.addEventListener("focus", resumeAudio);
+window.addEventListener("pageshow", resumeAudio);
 window.addEventListener("resize", ()=>{ if(state.page==="daw" && state.dawSel>=0){ drawWave(); updateRegionUI(); } if(state.page==="pads") drawPadWave(); });
 
 /* ---------- go ---------- */
