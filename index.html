@@ -36,8 +36,13 @@
   }
   .brand{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-.02em; }
   .brand .dot{ width:11px; height:11px; border-radius:50%; background:var(--accent); }
-  .brand .logo{ width:30px; height:30px; display:inline-flex; }
-  .brand .logo svg{ width:30px; height:30px; display:block; }
+  .brand .logo{ width:34px; height:34px; display:inline-flex; }
+  .brand .logo svg{ width:34px; height:34px; display:block; }
+  .brand .logo .lg-bg{ fill:var(--accent); }
+  .brand .logo .lg-fg{ fill:var(--accent-text); }
+  .brand-text{ display:flex; flex-direction:column; line-height:1.1; }
+  .brand-name{ font-weight:700; font-size:18px; }
+  .brand-credit{ font-weight:400; font-size:10px; color:var(--dim); letter-spacing:0; margin-top:2px; }
   .page-title{ color:var(--dim); font-weight:500; font-size:13px; }
   nav{ display:flex; gap:6px; }
   nav button{
@@ -186,8 +191,16 @@
   .fadeout-btn{ z-index:0; }
   .fadeout-btn > *:not(.cooldown){ position:relative; z-index:1; }
   .pad-vol{ display:flex; align-items:center; flex:none; }
-  .pad-vol > *{ margin:0 4px; }
-  .pad-vol input{ width:170px; }
+  .pad-vol > *{ margin:0 6px; }
+  .loop-btn{ background:var(--surface2); border-color:var(--border); color:var(--dim); }
+  .loop-btn.on{ background:#2f7bff; border-color:#2f7bff; color:#fff; box-shadow:0 0 12px -1px #2f7bff; }
+  .hfader{ position:relative; width:210px; height:22px; cursor:pointer; touch-action:none; display:flex; align-items:center; }
+  .hfader .track{ position:relative; width:100%; height:8px; border-radius:5px; background:rgba(127,127,127,.16); box-shadow:inset 0 0 0 1px rgba(127,127,127,.28); overflow:hidden; }
+  .hfader .fill{ position:absolute; left:0; top:0; bottom:0; width:100%; border-radius:5px;
+    background:var(--accent);
+    box-shadow:0 0 6px var(--accent), 0 0 14px var(--accent), 0 0 22px var(--accent), inset 0 0 6px rgba(255,255,255,.35);
+    filter:saturate(1.3) brightness(1.12); }
+  .hfader .knob{ position:absolute; top:50%; transform:translate(-50%,-50%); width:14px; height:18px; border-radius:5px; background:var(--text); box-shadow:0 1px 4px rgba(0,0,0,.55), 0 0 8px var(--accent); }
   .player.bar.bottom{ padding:8px 16px calc(8px + env(safe-area-inset-bottom)); }
 
   /* ---- DAW ---- */
@@ -314,7 +327,7 @@
 <body>
 <div id="app">
   <header>
-    <div class="brand"><span class="logo"><svg viewBox="0 0 48 48"><rect x="2" y="2" width="44" height="44" rx="11" fill="var(--accent)"/><text x="24" y="22" font-size="17" font-weight="700" fill="var(--accent-text)" text-anchor="middle" font-family="var(--font-ui)">AM</text><g fill="var(--accent-text)"><rect x="13" y="30" width="3" height="6" rx="1.5"/><rect x="19" y="27" width="3" height="12" rx="1.5"/><rect x="25.5" y="29" width="3" height="8" rx="1.5"/><rect x="32" y="26" width="3" height="14" rx="1.5"/></g></svg></span>Audiomastor <span class="page-title" id="pageTitle">Pads</span></div>
+    <div class="brand"><span class="logo"><svg viewBox="0 0 48 48"><rect class="lg-bg" x="2" y="2" width="44" height="44" rx="11"/><text class="lg-fg" x="24" y="22" font-size="17" font-weight="700" text-anchor="middle">AM</text><g class="lg-fg"><rect x="13" y="30" width="3" height="6" rx="1.5"/><rect x="19" y="27" width="3" height="12" rx="1.5"/><rect x="25.5" y="29" width="3" height="8" rx="1.5"/><rect x="32" y="26" width="3" height="14" rx="1.5"/></g></svg></span><span class="brand-text"><span class="brand-name">Audiomastor <span class="page-title" id="pageTitle">Pads</span></span><span class="brand-credit">Made by Santini (Beta Version 0.8)</span></span></div>
     <nav id="nav">
       <button data-page="pads" class="on" aria-label="Pads"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
       <button data-page="playlist" aria-label="Playlist"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="15" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="11" y2="18"/><circle cx="18" cy="16" r="3"/><line x1="21" y1="16" x2="21" y2="7"/></svg></button>
@@ -342,10 +355,11 @@
             <button class="btn icon round play-btn" id="padPlay" title="Play / pause"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg></button>
             <button class="btn icon round stop-btn" id="padStopBtn" title="Stop"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
             <button class="btn fadeout-btn" id="fadeBtn" title="Force fade out the playing pad"><span class="cooldown" id="fadeCooldown"></span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="4" y2="18"/><line x1="9" y1="8" x2="9" y2="16"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="19" y1="11.5" x2="19" y2="12.5"/></svg>Force fade out</button>
+            <button class="btn icon round loop-btn" id="padLoopBtn" title="Loop the playing pad"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
           </div>
           <div class="pad-vol">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M19 5a9 9 0 0 1 0 14M15.5 8.5a4 4 0 0 1 0 7"/></svg>
-            <input type="range" id="masterVol" min="0" max="1" step="0.01" value="1">
+            <div class="hfader" id="masterVol" data-val="1"><div class="track"><div class="fill" style="width:100%"></div></div><div class="knob" style="left:100%"></div></div>
           </div>
         </div>
       </div>
@@ -853,6 +867,7 @@ function updatePadPlayer(){
     ph.style.left = (dur? (pos/dur)*w : 0)+"px";
   }
   $("#padPlay").innerHTML = (has && p.source)? PAUSE_ICON : PLAY_ICON;
+  $("#padLoopBtn").classList.toggle("on", !!(has && p.loop));
 }
 function padLevel(p){
   if(!p.analyser||!p.meterBuf) return 0;
@@ -937,7 +952,34 @@ $("#padWaveWrap").addEventListener("pointermove", e=>{ if(padWaveDrag){ e.preven
 $("#padWaveWrap").addEventListener("pointerup", e=>{ if(!padWaveDrag) return; padWaveDrag=false; state.padScrubbing=false; padSeek(state.padScrubFrac||0); });
 
 $("#fadeBtn").addEventListener("click", fadeOutAll);
-$("#masterVol").addEventListener("input", e=>{ state.settings.masterVol=+e.target.value; if(master) master.gain.value=+e.target.value; saveMeta(); });
+$("#padLoopBtn").addEventListener("click", function(){
+  const i=state.activePad; if(i<0) return;
+  const p=state.pads[i]; if(!p.buffer) return;
+  p.loop=!p.loop;
+  if(p.source) p.source.loop=p.loop;   // apply live to the playing source
+  this.classList.toggle("on", p.loop);
+  renderPads(); saveMeta();
+});
+function updateLoopBtn(){
+  const i=state.activePad, p=i>=0?state.pads[i]:null;
+  $("#padLoopBtn").classList.toggle("on", !!(p && p.loop));
+}
+function setMasterVol(v){
+  v=clamp(v,0,1);
+  state.settings.masterVol=v;
+  if(master) master.gain.value=v;
+  const fd=$("#masterVol"); if(fd){ fd.dataset.val=v; fd.querySelector(".fill").style.width=(v*100).toFixed(1)+"%"; fd.querySelector(".knob").style.left=(v*100).toFixed(1)+"%"; }
+}
+let masterDrag=false;
+function masterFrac(clientX){ const t=$("#masterVol").querySelector(".track").getBoundingClientRect(); return clamp((clientX-t.left)/t.width,0,1); }
+$("#masterVol").addEventListener("pointerdown", e=>{
+  e.preventDefault(); masterDrag=true;
+  try{ $("#masterVol").setPointerCapture(e.pointerId); }catch(_){}
+  setMasterVol(masterFrac(e.clientX));
+});
+$("#masterVol").addEventListener("pointermove", e=>{ if(masterDrag){ e.preventDefault(); setMasterVol(masterFrac(e.clientX)); } });
+$("#masterVol").addEventListener("pointerup", ()=>{ if(masterDrag){ masterDrag=false; saveMeta(); } });
+$("#masterVol").addEventListener("pointercancel", ()=>{ if(masterDrag){ masterDrag=false; saveMeta(); } });
 $("#fadeInBtn").addEventListener("click", function(){ state.settings.fadeIn=!state.settings.fadeIn; this.classList.toggle("on", state.settings.fadeIn); saveMeta(); });
 $("#importBtn").addEventListener("click", function(){
   state.importMode=!state.importMode;
@@ -1317,7 +1359,7 @@ function applySettings(){
   const ui = s.fontUI==="System"? "-apple-system,system-ui,sans-serif" : `'${s.fontUI}',sans-serif`;
   const mo = s.fontMono==="System"? "ui-monospace,Menlo,monospace" : `'${s.fontMono}',monospace`;
   r.setProperty("--font-ui", ui); r.setProperty("--font-mono", mo);
-  $("#masterVol").value = s.masterVol;
+  const mf=$("#masterVol"); if(mf){ const v=s.masterVol; mf.dataset.val=v; mf.querySelector(".fill").style.width=(v*100).toFixed(1)+"%"; mf.querySelector(".knob").style.left=(v*100).toFixed(1)+"%"; }
 }
 function buildOptions(){
   const s=state.settings;
