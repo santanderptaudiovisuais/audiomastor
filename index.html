@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>PadDeck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=DM+Sans:wght@400;500;700&family=Chivo:wght@400;500;700&family=Fraunces:wght@400;500;600&family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0f12; --surface:#1a1c21; --surface2:#24272e; --border:#2e323b;
+    --text:#f2f3f5; --dim:#8b909a; --accent:#ff7a45; --accent-text:#1a1206;
+    --radius:14px; --font-ui:'Sora',sans-serif; --font-mono:'JetBrains Mono',monospace;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; height:100%; }
+  body{
+    background:var(--bg); color:var(--text); font-family:var(--font-ui);
+    overflow:hidden; touch-action:manipulation; -webkit-text-size-adjust:100%;
+    user-select:none; -webkit-user-select:none;
+  }
+  button{ font-family:inherit; color:inherit; cursor:pointer; }
+
+  /* ---- App shell ---- */
+  #app{ display:flex; flex-direction:column; height:100%; padding-top:env(safe-area-inset-top); }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 16px; border-bottom:1px solid var(--border); background:var(--surface);
+    gap:12px; flex:none;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-.02em; }
+  .brand .dot{ width:11px; height:11px; border-radius:50%; background:var(--accent); }
+  .page-title{ color:var(--dim); font-weight:500; font-size:13px; }
+  nav{ display:flex; gap:6px; }
+  nav button{
+    width:42px; height:42px; border-radius:12px; border:1px solid var(--border);
+    background:var(--surface2); display:grid; place-items:center; transition:.15s; padding:0;
+  }
+  nav button svg{ width:20px; height:20px; stroke:var(--dim); }
+  nav button.on{ background:var(--accent); border-color:var(--accent); }
+  nav button.on svg{ stroke:var(--accent-text); }
+  main{ flex:1; overflow:hidden; position:relative; }
+  .page{ position:absolute; inset:0; display:none; flex-direction:column; }
+  .page.on{ display:flex; }
+  .scroll{ overflow:auto; -webkit-overflow-scrolling:touch; flex:1; padding:16px; }
+
+  /* ---- Shared controls ---- */
+  .bar{
+    display:flex; align-items:center; gap:10px; padding:12px 16px;
+    border-bottom:1px solid var(--border); background:var(--surface); flex-wrap:wrap; flex:none;
+  }
+  .bar.bottom{ border-bottom:none; border-top:1px solid var(--border); }
+  .btn{
+    border:1px solid var(--border); background:var(--surface2); color:var(--text);
+    border-radius:11px; padding:9px 14px; font-size:14px; font-weight:500;
+    display:inline-flex; align-items:center; gap:8px; transition:.12s; white-space:nowrap;
+  }
+  .btn svg{ width:18px; height:18px; stroke:currentColor; }
+  .btn:active{ transform:scale(.96); }
+  .btn.primary{ background:var(--accent); border-color:var(--accent); color:var(--accent-text); }
+  .btn.ghost{ background:transparent; }
+  .btn.on{ background:var(--accent); border-color:var(--accent); color:var(--accent-text); }
+  .btn.icon{ padding:9px; width:40px; height:40px; justify-content:center; }
+  .btn.round{ border-radius:50%; }
+  .spacer{ flex:1; }
+  .label{ color:var(--dim); font-size:12px; font-weight:500; }
+  .mono{ font-family:var(--font-mono); }
+  input[type=range]{ -webkit-appearance:none; appearance:none; height:5px; border-radius:3px; background:var(--border); outline:none; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); cursor:pointer; }
+  .vol{ display:flex; align-items:center; gap:8px; min-width:150px; }
+  .vol input{ flex:1; }
+
+  /* ---- Pads ---- */
+  #padGrid{ display:grid; gap:12px; padding:16px; }
+  .pad{
+    position:relative; aspect-ratio:1/1; border-radius:var(--radius);
+    background:var(--surface); border:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:8px; transition:transform .08s, box-shadow .12s, background .12s; overflow:hidden;
+  }
+  .pad .num{ position:absolute; top:7px; left:9px; font-size:11px; color:var(--dim); font-family:var(--font-mono); }
+  .pad .name{ font-size:13px; font-weight:600; text-align:center; line-height:1.25; word-break:break-word; max-width:100%; }
+  .pad .empty{ color:var(--dim); font-size:12px; display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .pad .empty svg{ width:22px; height:22px; stroke:var(--dim); }
+  .pad .gear{
+    position:absolute; top:5px; right:5px; width:26px; height:26px; border-radius:8px;
+    background:rgba(0,0,0,.25); border:none; display:grid; place-items:center; opacity:0; transition:.15s;
+  }
+  .pad .gear svg{ width:15px; height:15px; stroke:var(--text); }
+  .pad:hover .gear{ opacity:.85; }
+  .pad.loaded{ cursor:pointer; }
+  .pad.loaded:active{ transform:scale(.97); }
+  .pad.playing{ box-shadow:inset 0 0 0 2px var(--accent), 0 0 22px -4px var(--accent); }
+  .pad.playing .padfill{ position:absolute; inset:0; background:var(--accent); opacity:.14; }
+  .pad .swatch{ position:absolute; bottom:0; left:0; right:0; height:5px; }
+  .pad.dragging{ opacity:.4; }
+  .pad.dragover{ box-shadow:inset 0 0 0 2px var(--accent); }
+  .ghost{ position:fixed; z-index:200; pointer-events:none; border-radius:var(--radius);
+    background:var(--surface2); border:1px solid var(--accent); display:grid; place-items:center;
+    font-weight:600; font-size:13px; box-shadow:0 12px 30px rgba(0,0,0,.5); }
+  .rearrange-hint{ padding:10px 16px; color:var(--accent); font-size:13px; text-align:center; }
+
+  /* ---- Playlist ---- */
+  .list{ display:flex; flex-direction:column; }
+  .row{
+    display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px;
+    border:1px solid transparent; transition:.12s;
+  }
+  .row:hover{ background:var(--surface); }
+  .row.current{ background:var(--surface); border-color:var(--accent); }
+  .row .ix{ width:26px; text-align:center; color:var(--dim); font-family:var(--font-mono); font-size:13px; flex:none; }
+  .row .meta{ flex:1; min-width:0; }
+  .row .ti{ font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .row .sub{ color:var(--dim); font-size:12px; }
+  .row .dur{ color:var(--dim); font-family:var(--font-mono); font-size:13px; flex:none; }
+  .row .x{ border:none; background:transparent; padding:6px; border-radius:8px; display:grid; place-items:center; }
+  .row .x svg{ width:17px; height:17px; stroke:var(--dim); }
+  .row .x:active{ background:var(--surface2); }
+  .player{ padding:14px 18px; }
+  .seek{ display:flex; align-items:center; gap:10px; }
+  .seek input{ flex:1; }
+  .seek .t{ font-family:var(--font-mono); font-size:12px; color:var(--dim); min-width:42px; }
+  .transport{ display:flex; align-items:center; justify-content:center; gap:14px; margin-top:12px; }
+  .transport .btn.icon{ width:46px; height:46px; }
+  .transport .play{ width:60px; height:60px; }
+  .transport .play svg{ width:26px; height:26px; }
+  .nowplaying{ text-align:center; margin-bottom:6px; }
+  .nowplaying .ti{ font-weight:600; font-size:16px; }
+  .nowplaying .sub{ color:var(--dim); font-size:12px; }
+
+  /* ---- DAW ---- */
+  .daw-wrap{ display:flex; height:100%; min-height:0; }
+  .daw-side{ width:210px; flex:none; border-right:1px solid var(--border); overflow:auto; padding:10px; }
+  .daw-side .trk{
+    padding:10px 12px; border-radius:11px; border:1px solid var(--border); background:var(--surface);
+    margin-bottom:8px; font-size:13px; font-weight:500; display:flex; align-items:center; gap:8px;
+  }
+  .daw-side .trk.on{ border-color:var(--accent); }
+  .daw-side .trk .tn{ flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .daw-side .trk .x{ border:none; background:transparent; padding:4px; display:grid; place-items:center; }
+  .daw-side .trk .x svg{ width:15px; height:15px; stroke:var(--dim); }
+  .daw-main{ flex:1; display:flex; flex-direction:column; min-width:0; }
+  .wave-zone{ flex:1; position:relative; margin:16px; border-radius:var(--radius); background:var(--surface); border:1px solid var(--border); overflow:hidden; min-height:160px; }
+  #waveCanvas{ position:absolute; inset:0; width:100%; height:100%; }
+  .region{ position:absolute; top:0; bottom:0; background:var(--accent); opacity:.16; pointer-events:none; }
+  .handle{ position:absolute; top:0; bottom:0; width:14px; margin-left:-7px; cursor:ew-resize; touch-action:none; }
+  .handle::after{ content:''; position:absolute; left:6px; top:0; bottom:0; width:2px; background:var(--accent); }
+  .handle::before{ content:''; position:absolute; left:1px; top:50%; transform:translateY(-50%); width:12px; height:34px; border-radius:5px; background:var(--accent); opacity:.9; }
+  .playhead{ position:absolute; top:0; bottom:0; width:2px; background:var(--text); pointer-events:none; left:0; display:none; }
+  .daw-empty{ flex:1; display:grid; place-items:center; color:var(--dim); text-align:center; font-size:14px; padding:30px; }
+  .daw-info{ display:flex; gap:18px; padding:0 18px 6px; flex-wrap:wrap; }
+  .daw-info div{ font-size:12px; }
+  .daw-info span{ color:var(--dim); }
+  .daw-info b{ font-family:var(--font-mono); font-weight:500; }
+
+  /* ---- Options ---- */
+  .opt-section{ margin-bottom:26px; }
+  .opt-section h3{ font-size:14px; font-weight:600; margin:0 0 12px; color:var(--text); }
+  .swatches{ display:flex; gap:10px; flex-wrap:wrap; }
+  .swatch-btn{ width:38px; height:38px; border-radius:10px; border:2px solid transparent; }
+  .swatch-btn.on{ border-color:var(--text); }
+  .theme-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
+  .theme-card{ border:2px solid var(--border); border-radius:12px; padding:12px; text-align:left; }
+  .theme-card.on{ border-color:var(--accent); }
+  .theme-card .prev{ height:30px; border-radius:7px; margin-bottom:8px; display:flex; gap:4px; padding:5px; }
+  .theme-card .prev i{ flex:1; border-radius:4px; display:block; }
+  .theme-card .nm{ font-size:13px; font-weight:500; }
+  .opt-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 0; border-bottom:1px solid var(--border); }
+  .opt-row .desc{ color:var(--dim); font-size:12px; margin-top:2px; }
+  select{
+    font-family:inherit; font-size:14px; padding:9px 12px; border-radius:10px;
+    background:var(--surface2); color:var(--text); border:1px solid var(--border); min-width:150px;
+  }
+  .seg{ display:inline-flex; border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .seg button{ background:var(--surface2); border:none; padding:9px 15px; font-size:14px; font-weight:500; border-right:1px solid var(--border); }
+  .seg button:last-child{ border-right:none; }
+  .seg button.on{ background:var(--accent); color:var(--accent-text); }
+
+  /* ---- Modal / sheet ---- */
+  .overlay{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; z-index:100; padding:18px; }
+  .overlay.on{ display:flex; }
+  .sheet{ background:var(--surface); border:1px solid var(--border); border-radius:18px; width:100%; max-width:380px; padding:20px; }
+  .sheet h3{ margin:0 0 16px; font-size:17px; }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12px; color:var(--dim); margin-bottom:6px; }
+  .field input[type=text]{ width:100%; padding:10px 12px; border-radius:10px; background:var(--surface2); color:var(--text); border:1px solid var(--border); font-family:inherit; font-size:14px; }
+  .colorrow{ display:flex; gap:8px; flex-wrap:wrap; }
+  .toggle{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; }
+  .switch{ width:46px; height:27px; border-radius:14px; background:var(--border); position:relative; border:none; transition:.15s; flex:none; }
+  .switch.on{ background:var(--accent); }
+  .switch i{ position:absolute; top:3px; left:3px; width:21px; height:21px; border-radius:50%; background:#fff; transition:.15s; }
+  .switch.on i{ left:22px; }
+  .sheet-actions{ display:flex; gap:10px; margin-top:8px; }
+  .sheet-actions .btn{ flex:1; justify-content:center; }
+  .empty-state{ text-align:center; color:var(--dim); padding:50px 20px; }
+  .empty-state svg{ width:40px; height:40px; stroke:var(--dim); margin-bottom:12px; }
+  .empty-state p{ font-size:14px; }
+  .hidden-input{ display:none; }
+  .clip{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand"><span class="dot"></span>PadDeck <span class="page-title" id="pageTitle">Pads</span></div>
+    <nav id="nav">
+      <button data-page="pads" class="on" aria-label="Pads"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+      <button data-page="playlist" aria-label="Playlist"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="15" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="11" y2="18"/><circle cx="18" cy="16" r="3"/><line x1="21" y1="16" x2="21" y2="7"/></svg></button>
+      <button data-page="daw" aria-label="Waveform editor"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="3" y2="12"/><line x1="6" y1="8" x2="6" y2="16"/><line x1="9" y1="5" x2="9" y2="19"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="15" y1="4" x2="15" y2="20"/><line x1="18" y1="8" x2="18" y2="16"/><line x1="21" y1="11" x2="21" y2="13"/></svg></button>
+      <button data-page="options" aria-label="Options"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- PADS -->
+    <section class="page on" id="page-pads">
+      <div class="bar">
+        <button class="btn icon" id="fadeBtn" title="Fade out playing audio"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M4 18 L20 6"/><path d="M4 18 L20 18"/></svg></button>
+        <button class="btn icon" id="stopAllBtn" title="Stop all"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+        <button class="btn" id="rearrangeBtn"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Rearrange</button>
+        <div class="spacer"></div>
+        <div class="vol">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M19 5a9 9 0 0 1 0 14M15.5 8.5a4 4 0 0 1 0 7"/></svg>
+          <input type="range" id="masterVol" min="0" max="1" step="0.01" value="1">
+        </div>
+      </div>
+      <div class="rearrange-hint" id="rearrangeHint" style="display:none">Drag pads to reorder · tap Rearrange again when done</div>
+      <div class="scroll" style="padding:0"><div id="padGrid"></div></div>
+    </section>
+
+    <!-- PLAYLIST -->
+    <section class="page" id="page-playlist">
+      <div class="bar">
+        <button class="btn primary" id="plImport"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add songs</button>
+        <button class="btn ghost" id="plShuffleList"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Shuffle</button>
+        <div class="spacer"></div>
+        <button class="btn ghost" id="plClear">Clear</button>
+      </div>
+      <div class="scroll"><div class="list" id="plList"></div>
+        <div class="empty-state" id="plEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+          <p>No songs yet. Tap “Add songs” to import audio.</p>
+        </div>
+      </div>
+      <div class="player bar bottom" id="plPlayer" style="display:none; flex-direction:column; align-items:stretch;">
+        <div class="nowplaying"><div class="ti" id="plNowTitle">—</div><div class="sub" id="plNowSub"></div></div>
+        <div class="seek"><span class="t" id="plCur">0:00</span><input type="range" id="plSeek" min="0" max="100" value="0" step="0.1"><span class="t" id="plDur">0:00</span></div>
+        <div class="transport">
+          <button class="btn icon round ghost" id="plShuffleMode" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg></button>
+          <button class="btn icon round" id="plPrev"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4"/><line x1="5" y1="19" x2="5" y2="5"/></svg></button>
+          <button class="btn icon round primary play" id="plPlay"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg></button>
+          <button class="btn icon round" id="plNext"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20"/><line x1="19" y1="5" x2="19" y2="19"/></svg></button>
+          <button class="btn icon round ghost" id="plRepeat" title="Repeat"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
+        </div>
+        <div class="vol" style="margin-top:12px; align-self:center;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M19 5a9 9 0 0 1 0 14M15.5 8.5a4 4 0 0 1 0 7"/></svg>
+          <input type="range" id="plVol" min="0" max="1" step="0.01" value="1" style="width:130px">
+        </div>
+      </div>
+    </section>
+
+    <!-- DAW -->
+    <section class="page" id="page-daw">
+      <div class="bar">
+        <button class="btn primary" id="dawImport"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Import track</button>
+        <button class="btn icon" id="dawPlay" disabled><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg></button>
+        <button class="btn icon" id="dawStop" disabled><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
+        <button class="btn ghost" id="dawLoop"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Loop section</button>
+        <div class="spacer"></div>
+        <button class="btn ghost" id="dawFull">Full clip</button>
+      </div>
+      <div class="daw-wrap">
+        <div class="daw-side" id="dawSide"></div>
+        <div class="daw-main">
+          <div class="daw-empty" id="dawEmpty">Import an audio track to see its waveform.<br>Then drag the orange handles to set the play section.</div>
+          <div class="wave-zone" id="waveZone" style="display:none">
+            <canvas id="waveCanvas"></canvas>
+            <div class="region" id="region"></div>
+            <div class="handle" id="handleIn"></div>
+            <div class="handle" id="handleOut"></div>
+            <div class="playhead" id="playhead"></div>
+          </div>
+          <div class="daw-info" id="dawInfo" style="display:none">
+            <div><span>In </span><b id="infoIn">0:00</b></div>
+            <div><span>Out </span><b id="infoOut">0:00</b></div>
+            <div><span>Section </span><b id="infoSec">0:00</b></div>
+            <div><span>Position </span><b id="infoPos">0:00</b></div>
+            <div><span>Total </span><b id="infoTot">0:00</b></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OPTIONS -->
+    <section class="page" id="page-options">
+      <div class="scroll">
+        <div class="opt-section">
+          <h3>Theme</h3>
+          <div class="theme-grid" id="themeGrid"></div>
+        </div>
+        <div class="opt-section">
+          <h3>Accent color</h3>
+          <div class="swatches" id="accentSwatches"></div>
+          <div style="margin-top:12px; display:flex; align-items:center; gap:10px;">
+            <span class="label">Custom</span>
+            <input type="color" id="accentCustom" style="width:46px; height:34px; border:1px solid var(--border); border-radius:8px; background:var(--surface2);">
+          </div>
+        </div>
+        <div class="opt-section">
+          <h3>Typography</h3>
+          <div class="opt-row"><div><div style="font-weight:500">Interface font</div><div class="desc">Used across the whole app</div></div>
+            <select id="fontUI"></select></div>
+          <div class="opt-row"><div><div style="font-weight:500">Numbers / timecode font</div><div class="desc">Used for timers and counters</div></div>
+            <select id="fontMono"></select></div>
+        </div>
+        <div class="opt-section">
+          <h3>Pads layout</h3>
+          <div class="opt-row"><div><div style="font-weight:500">Columns</div><div class="desc">How many pads per row</div></div>
+            <div class="seg" id="padColsSeg"><button data-c="4">4</button><button data-c="5">5</button><button data-c="6">6</button></div></div>
+          <div class="opt-row"><div><div style="font-weight:500">Fade-out time</div><div class="desc">Seconds for the fade button</div></div>
+            <div style="display:flex; align-items:center; gap:10px; min-width:170px;"><input type="range" id="fadeTime" min="0.3" max="6" step="0.1" style="flex:1"><span class="mono" id="fadeTimeVal" style="width:42px; text-align:right">2.0s</span></div></div>
+          <div class="opt-row"><div><div style="font-weight:500">One pad at a time</div><div class="desc">Playing a pad stops the others</div></div>
+            <button class="switch" id="exclusiveSw"><i></i></button></div>
+        </div>
+        <div class="opt-section">
+          <h3>Data</h3>
+          <div class="opt-row"><div><div style="font-weight:500">Reset appearance</div><div class="desc">Back to default theme &amp; fonts</div></div>
+            <button class="btn ghost" id="resetLook">Reset</button></div>
+          <div class="opt-row" style="border-bottom:none"><div><div style="font-weight:500">Clear everything</div><div class="desc">Removes all pads, songs &amp; tracks</div></div>
+            <button class="btn ghost" id="clearAll" style="color:#ff6b6b; border-color:#5a2a2a">Clear all</button></div>
+        </div>
+        <div style="text-align:center; color:var(--dim); font-size:12px; padding:10px 0 30px;">PadDeck · runs fully offline on your device</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Pad settings sheet -->
+<div class="overlay" id="padSheet">
+  <div class="sheet">
+    <h3 id="psTitle">Pad settings</h3>
+    <div class="field"><label>Name</label><input type="text" id="psName" placeholder="Pad name"></div>
+    <div class="field"><label>Color</label><div class="colorrow" id="psColors"></div></div>
+    <div class="field toggle"><span>Loop</span><button class="switch" id="psLoop"><i></i></button></div>
+    <div class="field toggle"><span>Tap again to stop</span><button class="switch" id="psToggle"><i></i></button></div>
+    <div class="field"><label>Volume</label><input type="range" id="psGain" min="0" max="1" step="0.01" style="width:100%"></div>
+    <div class="sheet-actions">
+      <button class="btn ghost" id="psLoad"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>Load audio</button>
+      <button class="btn ghost" id="psRemove" style="color:#ff6b6b">Clear pad</button>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn" id="psCancel">Cancel</button>
+      <button class="btn primary" id="psSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm sheet -->
+<div class="overlay" id="confirmSheet">
+  <div class="sheet">
+    <h3 id="cfTitle">Are you sure?</h3>
+    <p id="cfMsg" style="color:var(--dim); font-size:14px; margin:0 0 18px;"></p>
+    <div class="sheet-actions">
+      <button class="btn" id="cfNo">Cancel</button>
+      <button class="btn primary" id="cfYes" style="background:#ff6b6b; border-color:#ff6b6b; color:#fff">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" accept="audio/*" class="hidden-input" id="fileInput">
+
+<script>
+"use strict";
+/* ====================================================================
+   PadDeck — a 4-page audio app (Pads / Playlist / Waveform / Options)
+   Pure vanilla JS. Saves audio in your browser via IndexedDB so it
+   survives reloads. Designed for iPad Safari (touch-first).
+==================================================================== */
+
+/* ---------- tiny helpers ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const uid = () => Math.random().toString(36).slice(2,10);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const fmt = (s)=>{ if(!isFinite(s)||s<0) s=0; const m=Math.floor(s/60), x=Math.floor(s%60); return m+":"+String(x).padStart(2,"0"); };
+const LS_KEY = "paddeck_v1";
+
+/* ---------- IndexedDB for audio blobs ---------- */
+const DB = (()=>{
+  let dbp;
+  function open(){
+    if(dbp) return dbp;
+    dbp = new Promise((res,rej)=>{
+      const r = indexedDB.open("paddeck", 1);
+      r.onupgradeneeded = ()=> r.result.createObjectStore("audio");
+      r.onsuccess = ()=> res(r.result);
+      r.onerror = ()=> rej(r.error);
+    });
+    return dbp;
+  }
+  async function tx(mode){ const db = await open(); return db.transaction("audio", mode).objectStore("audio"); }
+  return {
+    async put(id, blob){ try{ const s=await tx("readwrite"); return new Promise((res,rej)=>{ const q=s.put(blob,id); q.onsuccess=res; q.onerror=()=>rej(q.error); }); }catch(e){ console.warn("idb put failed",e);} },
+    async get(id){ try{ const s=await tx("readonly"); return new Promise((res)=>{ const q=s.get(id); q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; } },
+    async del(id){ try{ const s=await tx("readwrite"); return new Promise((res)=>{ const q=s.delete(id); q.onsuccess=res; q.onerror=res; }); }catch(e){} },
+    async clear(){ try{ const s=await tx("readwrite"); return new Promise((res)=>{ const q=s.clear(); q.onsuccess=res; q.onerror=res; }); }catch(e){} }
+  };
+})();
+
+/* ---------- Audio engine ---------- */
+let actx=null, master=null;
+function ensureAudio(){
+  if(!actx){
+    actx = new (window.AudioContext||window.webkitAudioContext)();
+    master = actx.createGain();
+    master.gain.value = state.settings.masterVol;
+    master.connect(actx.destination);
+  }
+  if(actx.state==="suspended") actx.resume();
+  return actx;
+}
+async function decodeBlob(blob){
+  const ab = await blob.arrayBuffer();
+  ensureAudio();
+  return await new Promise((res,rej)=> actx.decodeAudioData(ab.slice(0), res, rej));
+}
+
+/* ---------- App state ---------- */
+const PALETTE = ["#ff7a45","#ffd23f","#3ddc97","#4cc9f0","#b388ff","#f15bb5","#ff5d5d","#9ee493"];
+const FONTS = ["Sora","Outfit","DM Sans","Chivo","Fraunces","System"];
+const MONO = ["JetBrains Mono","Space Mono","System"];
+const THEMES = {
+  dark:     {label:"Dark",     bg:"#0e0f12", surface:"#1a1c21", surface2:"#24272e", border:"#2e323b", text:"#f2f3f5", dim:"#8b909a"},
+  light:    {label:"Light",    bg:"#f3f4f6", surface:"#ffffff", surface2:"#eceef1", border:"#d9dce1", text:"#16181d", dim:"#6b7178"},
+  midnight: {label:"Midnight", bg:"#0a0e1a", surface:"#121a2e", surface2:"#1b2742", border:"#243353", text:"#e8edf7", dim:"#7d8aa8"},
+  studio:   {label:"Studio",   bg:"#14110e", surface:"#211b15", surface2:"#2d2419", border:"#3a2f20", text:"#f5efe6", dim:"#9c8f7c"},
+  slate:    {label:"Slate",    bg:"#14171a", surface:"#1e2329", surface2:"#283038", border:"#333d47", text:"#eef2f5", dim:"#8794a0"},
+  paper:    {label:"Paper",    bg:"#efeae0", surface:"#fbf8f1", surface2:"#e6e0d2", border:"#d2cab8", text:"#2a2620", dim:"#7a7060"}
+};
+const DEFAULT_SETTINGS = { theme:"dark", accent:"#ff7a45", fontUI:"Sora", fontMono:"JetBrains Mono", padCols:6, fadeTime:2, exclusive:false, masterVol:1 };
+
+const state = {
+  page:"pads",
+  settings:{...DEFAULT_SETTINGS},
+  pads:[],        // 24 pad objects
+  playlist:[],    // playlist items
+  daw:[],         // daw tracks
+  rearrange:false,
+  // playlist runtime
+  plIndex:-1, plRepeat:"off", plShuffle:false,
+  // daw runtime
+  dawSel:-1, dawLoop:false, dawSource:null, dawStartCtx:0, dawStartOff:0, dawRaf:0
+};
+for(let i=0;i<24;i++) state.pads.push({ id:"pad-"+i, name:"", color:"#ff7a45", loop:false, toggle:false, gain:1, buffer:null, fileName:"", source:null, gainNode:null, playing:false });
+
+/* ---------- persistence of metadata (blobs live in IndexedDB) ---------- */
+function saveMeta(){
+  const data = {
+    settings: state.settings,
+    pads: state.pads.map(p=>({ id:p.id, name:p.name, color:p.color, loop:p.loop, toggle:p.toggle, gain:p.gain, fileName:p.fileName, has:!!p.buffer })),
+    playlist: state.playlist.map(t=>({ id:t.id, name:t.name, duration:t.duration })),
+    daw: state.daw.map(t=>({ id:t.id, name:t.name, regIn:t.regIn, regOut:t.regOut, duration:t.duration }))
+  };
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(data)); }catch(e){ console.warn("save failed",e); }
+}
+
+async function loadAll(){
+  let data=null;
+  try{ data = JSON.parse(localStorage.getItem(LS_KEY)||"null"); }catch(e){}
+  if(data && data.settings) state.settings = {...DEFAULT_SETTINGS, ...data.settings};
+  applySettings();
+  buildOptions();
+
+  if(data){
+    // pads
+    if(Array.isArray(data.pads)) data.pads.forEach((m,i)=>{
+      if(i<24){ const p=state.pads[i]; p.id=m.id||p.id; p.name=m.name||""; p.color=m.color||state.settings.accent; p.loop=!!m.loop; p.toggle=!!m.toggle; p.gain=(m.gain==null?1:m.gain); p.fileName=m.fileName||""; }
+    });
+    // playlist
+    if(Array.isArray(data.playlist)) for(const m of data.playlist){
+      const blob = await DB.get(m.id);
+      if(blob){ state.playlist.push({ id:m.id, name:m.name, duration:m.duration, blob, url:URL.createObjectURL(blob) }); }
+    }
+    // daw
+    if(Array.isArray(data.daw)) for(const m of data.daw){
+      const blob = await DB.get(m.id);
+      if(blob){ try{ const buf=await decodeBlob(blob); state.daw.push({ id:m.id, name:m.name, buffer:buf, duration:buf.duration, regIn:(m.regIn||0), regOut:(m.regOut!=null?m.regOut:buf.duration) }); }catch(e){} }
+    }
+    // pad buffers (decode in background so UI shows fast)
+    if(Array.isArray(data.pads)) data.pads.forEach(async (m,i)=>{
+      if(i<24 && m.has){ const blob=await DB.get(m.id); if(blob){ try{ state.pads[i].buffer = await decodeBlob(blob); renderPads(); }catch(e){} } }
+    });
+  }
+  renderPads(); renderPlaylist(); renderDaw();
+}
+
+/* ====================================================================
+   NAV
+==================================================================== */
+const TITLES = { pads:"Pads", playlist:"Playlist", daw:"Waveform", options:"Options" };
+function goPage(p){
+  state.page=p;
+  $$(".page").forEach(s=>s.classList.toggle("on", s.id==="page-"+p));
+  $$("#nav button").forEach(b=>b.classList.toggle("on", b.dataset.page===p));
+  $("#pageTitle").textContent = TITLES[p];
+  if(p==="daw" && state.dawSel>=0){ drawWave(); updateRegionUI(); }
+}
+$("#nav").addEventListener("click", e=>{ const b=e.target.closest("button"); if(b) goPage(b.dataset.page); });
+
+/* ====================================================================
+   FILE PICKER (shared)
+==================================================================== */
+let fileCb=null, fileMulti=false;
+function pickFile(multi, cb){ fileCb=cb; fileMulti=multi; const inp=$("#fileInput"); inp.multiple=multi; inp.value=""; inp.click(); }
+$("#fileInput").addEventListener("change", e=>{ const files=Array.from(e.target.files||[]); if(files.length && fileCb) fileCb(files); fileCb=null; });
+
+/* ====================================================================
+   PADS PAGE
+==================================================================== */
+const padGrid = $("#padGrid");
+function renderPads(){
+  padGrid.style.gridTemplateColumns = `repeat(${state.settings.padCols}, 1fr)`;
+  padGrid.innerHTML = "";
+  state.pads.forEach((p,i)=>{
+    const el = document.createElement("div");
+    el.className = "pad" + (p.buffer?" loaded":"") + (p.playing?" playing":"");
+    el.dataset.i = i;
+    el.style.setProperty("--accent-pad", p.color);
+    let inner = `<span class="num">${String(i+1).padStart(2,"0")}</span>`;
+    inner += p.playing? `<div class="padfill"></div>`:"";
+    if(p.buffer){
+      inner += `<div class="name">${escapeHtml(p.name|| (p.fileName?p.fileName.replace(/\.[^.]+$/,""):"Pad "+(i+1)))}</div>`;
+      inner += `<span class="swatch" style="background:${p.color}"></span>`;
+    } else {
+      inner += `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Load</div>`;
+    }
+    inner += `<button class="gear" data-gear="${i}"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="2.5"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></button>`;
+    el.innerHTML = inner;
+    if(p.playing){ el.style.boxShadow=`inset 0 0 0 2px ${p.color}, 0 0 22px -4px ${p.color}`; const f=el.querySelector(".padfill"); if(f) f.style.background=p.color; }
+    padGrid.appendChild(el);
+  });
+}
+function escapeHtml(s){ return (s||"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* tap handling: play, or open settings via gear */
+padGrid.addEventListener("click", e=>{
+  if(state.rearrange) return;
+  const gear = e.target.closest("[data-gear]");
+  if(gear){ openPadSheet(+gear.dataset.gear); return; }
+  const padEl = e.target.closest(".pad"); if(!padEl) return;
+  const i = +padEl.dataset.i;
+  if(state.pads[i].buffer) triggerPad(i); else openPadSheet(i);
+});
+
+function triggerPad(i){
+  ensureAudio();
+  const p = state.pads[i];
+  if(!p.buffer) return;
+  if(p.source){ // already playing
+    stopPadSource(p);
+    if(p.toggle){ renderPads(); return; } // toggle mode: just stop
+  }
+  if(state.settings.exclusive){ state.pads.forEach((q,j)=>{ if(j!==i && q.source) stopPadSource(q); }); }
+  const src = actx.createBufferSource();
+  src.buffer = p.buffer; src.loop = p.loop;
+  const g = actx.createGain(); g.gain.value = p.gain;
+  src.connect(g); g.connect(master); src.start();
+  p.source=src; p.gainNode=g; p.playing=true;
+  src.onended = ()=>{ if(p.source===src){ p.source=null; p.gainNode=null; p.playing=false; renderPads(); } };
+  renderPads();
+}
+function stopPadSource(p){ try{ if(p.source){ p.source.onended=null; p.source.stop(); } }catch(e){} p.source=null; p.gainNode=null; p.playing=false; }
+function stopAllPads(){ state.pads.forEach(p=>stopPadSource(p)); renderPads(); }
+function fadeOutAll(){
+  if(!actx) return;
+  const t = state.settings.fadeTime, now=actx.currentTime;
+  state.pads.forEach(p=>{
+    if(p.source && p.gainNode){
+      const g=p.gainNode.gain;
+      try{ g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(0.0001, now+t); }catch(e){}
+      const src=p.source;
+      setTimeout(()=>{ try{ src.stop(); }catch(e){} }, t*1000+30);
+    }
+  });
+  setTimeout(()=>renderPads(), t*1000+60);
+}
+$("#fadeBtn").addEventListener("click", fadeOutAll);
+$("#stopAllBtn").addEventListener("click", stopAllPads);
+$("#masterVol").addEventListener("input", e=>{ state.settings.masterVol=+e.target.value; if(master) master.gain.value=+e.target.value; saveMeta(); });
+
+/* rearrange mode (pointer drag) */
+$("#rearrangeBtn").addEventListener("click", function(){
+  state.rearrange = !state.rearrange;
+  this.classList.toggle("on", state.rearrange);
+  $("#rearrangeHint").style.display = state.rearrange? "block":"none";
+  if(state.rearrange) stopAllPads();
+});
+let drag=null;
+padGrid.addEventListener("pointerdown", e=>{
+  if(!state.rearrange) return;
+  const padEl=e.target.closest(".pad"); if(!padEl) return;
+  e.preventDefault();
+  const i=+padEl.dataset.i; const r=padEl.getBoundingClientRect();
+  const ghost=document.createElement("div"); ghost.className="ghost";
+  ghost.style.width=r.width+"px"; ghost.style.height=r.height+"px";
+  ghost.textContent = state.pads[i].name || (state.pads[i].buffer? "Pad "+(i+1):"empty");
+  document.body.appendChild(ghost);
+  drag={ i, el:padEl, ghost, ox:e.clientX-r.left, oy:e.clientY-r.top };
+  padEl.classList.add("dragging");
+  moveGhost(e.clientX,e.clientY);
+  padGrid.setPointerCapture(e.pointerId);
+});
+function moveGhost(x,y){ if(!drag) return; drag.ghost.style.left=(x-drag.ox)+"px"; drag.ghost.style.top=(y-drag.oy)+"px"; }
+padGrid.addEventListener("pointermove", e=>{
+  if(!drag) return; e.preventDefault(); moveGhost(e.clientX,e.clientY);
+  $$(".pad").forEach(p=>p.classList.remove("dragover"));
+  const t=document.elementFromPoint(e.clientX,e.clientY); const over=t&&t.closest(".pad");
+  if(over && over!==drag.el) over.classList.add("dragover");
+});
+padGrid.addEventListener("pointerup", e=>{
+  if(!drag) return; e.preventDefault();
+  const t=document.elementFromPoint(e.clientX,e.clientY); const over=t&&t.closest(".pad");
+  if(over){ const j=+over.dataset.i; if(j!==drag.i){ const a=state.pads[drag.i]; state.pads.splice(drag.i,1); state.pads.splice(j,0,a); } }
+  drag.ghost.remove(); drag=null; renderPads(); saveMeta();
+});
+
+/* pad settings sheet */
+let psIndex=-1;
+function openPadSheet(i){
+  psIndex=i; const p=state.pads[i];
+  $("#psTitle").textContent = "Pad "+(i+1);
+  $("#psName").value = p.name||"";
+  $("#psLoop").classList.toggle("on", p.loop);
+  $("#psToggle").classList.toggle("on", p.toggle);
+  $("#psGain").value = p.gain;
+  const cols=$("#psColors"); cols.innerHTML="";
+  PALETTE.forEach(c=>{ const b=document.createElement("button"); b.className="swatch-btn"+(c===p.color?" on":""); b.style.background=c; b.dataset.c=c; cols.appendChild(b); });
+  $("#psRemove").style.display = p.buffer? "":"none";
+  $("#padSheet").classList.add("on");
+}
+$("#psColors").addEventListener("click", e=>{ const b=e.target.closest(".swatch-btn"); if(!b) return; $$("#psColors .swatch-btn").forEach(x=>x.classList.remove("on")); b.classList.add("on"); });
+$("#psLoop").addEventListener("click", function(){ this.classList.toggle("on"); });
+$("#psToggle").addEventListener("click", function(){ this.classList.toggle("on"); });
+$("#psLoad").addEventListener("click", ()=>{
+  pickFile(false, async files=>{
+    const f=files[0]; const p=state.pads[psIndex];
+    try{ const buf=await decodeBlob(f); p.buffer=buf; p.fileName=f.name; await DB.put(p.id, f); if(!p.name) $("#psName").value=f.name.replace(/\.[^.]+$/,""); saveMeta(); renderPads(); }
+    catch(e){ alert("Could not read that audio file."); }
+  });
+});
+$("#psRemove").addEventListener("click", async ()=>{ const p=state.pads[psIndex]; stopPadSource(p); p.buffer=null; p.fileName=""; await DB.del(p.id); $("#padSheet").classList.remove("on"); saveMeta(); renderPads(); });
+$("#psCancel").addEventListener("click", ()=> $("#padSheet").classList.remove("on"));
+$("#psSave").addEventListener("click", ()=>{
+  const p=state.pads[psIndex];
+  p.name=$("#psName").value.trim();
+  const sel=$("#psColors .swatch-btn.on"); if(sel) p.color=sel.dataset.c;
+  p.loop=$("#psLoop").classList.contains("on");
+  p.toggle=$("#psToggle").classList.contains("on");
+  p.gain=+$("#psGain").value;
+  if(p.gainNode) p.gainNode.gain.value=p.gain;
+  $("#padSheet").classList.remove("on"); saveMeta(); renderPads();
+});
+
+/* ====================================================================
+   PLAYLIST PAGE
+==================================================================== */
+const audio = new Audio(); audio.preload="metadata";
+function renderPlaylist(){
+  const list=$("#plList"); list.innerHTML="";
+  $("#plEmpty").style.display = state.playlist.length? "none":"block";
+  $("#plPlayer").style.display = state.playlist.length? "flex":"none";
+  state.playlist.forEach((t,i)=>{
+    const row=document.createElement("div");
+    row.className="row"+(i===state.plIndex?" current":"");
+    row.dataset.i=i;
+    row.innerHTML = `<span class="ix">${i===state.plIndex && !audio.paused? "▶":i+1}</span>
+      <div class="meta"><div class="ti">${escapeHtml(t.name)}</div><div class="sub">${t.duration?fmt(t.duration):""}</div></div>
+      <button class="x" data-del="${i}"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>`;
+    list.appendChild(row);
+  });
+}
+$("#plList").addEventListener("click", e=>{
+  const del=e.target.closest("[data-del]");
+  if(del){ removePlItem(+del.dataset.del); return; }
+  const row=e.target.closest(".row"); if(row) playPlIndex(+row.dataset.i);
+});
+$("#plImport").addEventListener("click", ()=>{
+  pickFile(true, async files=>{
+    for(const f of files){
+      const id="pl-"+uid(); const blob=f;
+      const item={ id, name:f.name.replace(/\.[^.]+$/,""), duration:0, blob, url:URL.createObjectURL(blob) };
+      state.playlist.push(item);
+      await DB.put(id, blob);
+      // probe duration
+      const a=new Audio(); a.preload="metadata"; a.src=item.url;
+      a.addEventListener("loadedmetadata", ()=>{ item.duration=a.duration; renderPlaylist(); saveMeta(); }, {once:true});
+    }
+    renderPlaylist(); saveMeta();
+  });
+});
+function removePlItem(i){
+  const t=state.playlist[i]; if(!t) return;
+  if(i===state.plIndex){ audio.pause(); audio.src=""; state.plIndex=-1; updatePlPlayBtn(); }
+  DB.del(t.id); if(t.url) URL.revokeObjectURL(t.url);
+  state.playlist.splice(i,1);
+  if(state.plIndex>i) state.plIndex--;
+  renderPlaylist(); saveMeta();
+}
+$("#plClear").addEventListener("click", ()=>{
+  confirmDialog("Clear playlist?","Remove all songs from the playlist.", ()=>{
+    audio.pause(); audio.src=""; state.plIndex=-1;
+    state.playlist.forEach(t=>{ DB.del(t.id); if(t.url) URL.revokeObjectURL(t.url); });
+    state.playlist=[]; renderPlaylist(); saveMeta();
+  });
+});
+function playPlIndex(i){
+  if(i<0||i>=state.playlist.length) return;
+  ensureAudio(); if(actx.state==="suspended") actx.resume();
+  state.plIndex=i; const t=state.playlist[i];
+  audio.src=t.url; audio.volume=+$("#plVol").value; audio.play();
+  $("#plNowTitle").textContent=t.name; $("#plNowSub").textContent= t.duration?("Track "+(i+1)+" · "+fmt(t.duration)):("Track "+(i+1));
+  renderPlaylist(); updatePlPlayBtn();
+}
+function updatePlPlayBtn(){
+  $("#plPlay").innerHTML = (!audio.paused && audio.src)
+    ? `<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`
+    : `<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg>`;
+}
+$("#plPlay").addEventListener("click", ()=>{
+  if(!audio.src){ if(state.playlist.length) playPlIndex(state.plIndex<0?0:state.plIndex); return; }
+  if(audio.paused){ ensureAudio(); actx.resume(); audio.play(); } else audio.pause();
+  updatePlPlayBtn(); renderPlaylist();
+});
+$("#plNext").addEventListener("click", ()=> nextTrack(true));
+$("#plPrev").addEventListener("click", ()=>{ if(audio.currentTime>3){ audio.currentTime=0; } else playPlIndex(prevIndex()); });
+function nextTrack(manual){
+  if(state.plRepeat==="one" && !manual){ audio.currentTime=0; audio.play(); return; }
+  let n;
+  if(state.plShuffle){ n=Math.floor(Math.random()*state.playlist.length); }
+  else n=state.plIndex+1;
+  if(n>=state.playlist.length){ if(state.plRepeat==="all"||manual) n=0; else { audio.pause(); updatePlPlayBtn(); renderPlaylist(); return; } }
+  playPlIndex(n);
+}
+function prevIndex(){ if(state.plShuffle) return Math.floor(Math.random()*state.playlist.length); return state.plIndex<=0? state.playlist.length-1 : state.plIndex-1; }
+audio.addEventListener("ended", ()=> nextTrack(false));
+audio.addEventListener("timeupdate", ()=>{
+  if(!audio.duration) return;
+  $("#plSeek").value = (audio.currentTime/audio.duration)*100;
+  $("#plCur").textContent = fmt(audio.currentTime);
+  $("#plDur").textContent = fmt(audio.duration);
+});
+audio.addEventListener("play", ()=>{ updatePlPlayBtn(); renderPlaylist(); });
+audio.addEventListener("pause", ()=>{ updatePlPlayBtn(); renderPlaylist(); });
+$("#plSeek").addEventListener("input", e=>{ if(audio.duration) audio.currentTime=(e.target.value/100)*audio.duration; });
+$("#plVol").addEventListener("input", e=> audio.volume=+e.target.value);
+$("#plShuffleMode").addEventListener("click", function(){ state.plShuffle=!state.plShuffle; this.classList.toggle("on", state.plShuffle); });
+$("#plShuffleList").addEventListener("click", ()=>{
+  for(let i=state.playlist.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [state.playlist[i],state.playlist[j]]=[state.playlist[j],state.playlist[i]]; }
+  state.plIndex=-1; renderPlaylist(); saveMeta();
+});
+$("#plRepeat").addEventListener("click", function(){
+  state.plRepeat = state.plRepeat==="off"?"all":state.plRepeat==="all"?"one":"off";
+  this.classList.toggle("on", state.plRepeat!=="off");
+  this.title = "Repeat: "+state.plRepeat;
+  this.querySelector("svg").style.opacity = state.plRepeat==="one"? "1":"";
+  this.innerHTML = state.plRepeat==="one"
+    ? `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/><text x="12" y="15" font-size="8" fill="currentColor" stroke="none" text-anchor="middle">1</text></svg>`
+    : `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>`;
+});
+
+/* ====================================================================
+   DAW / WAVEFORM PAGE
+==================================================================== */
+function renderDaw(){
+  const side=$("#dawSide"); side.innerHTML="";
+  state.daw.forEach((t,i)=>{
+    const el=document.createElement("div"); el.className="trk"+(i===state.dawSel?" on":""); el.dataset.i=i;
+    el.innerHTML=`<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="9" x2="6" y2="15"/><line x1="10" y1="6" x2="10" y2="18"/><line x1="14" y1="9" x2="14" y2="15"/><line x1="18" y1="7" x2="18" y2="17"/></svg><span class="tn">${escapeHtml(t.name)}</span><button class="x" data-del="${i}"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>`;
+    side.appendChild(el);
+  });
+  const has = state.dawSel>=0 && state.daw[state.dawSel];
+  $("#dawEmpty").style.display = has? "none":"grid";
+  $("#waveZone").style.display = has? "block":"none";
+  $("#dawInfo").style.display = has? "flex":"none";
+  $("#dawPlay").disabled = !has; $("#dawStop").disabled = !has;
+  if(has){ drawWave(); updateRegionUI(); }
+}
+$("#dawSide").addEventListener("click", e=>{
+  const del=e.target.closest("[data-del]");
+  if(del){ removeDaw(+del.dataset.del); return; }
+  const trk=e.target.closest(".trk"); if(trk) selectDaw(+trk.dataset.i);
+});
+$("#dawImport").addEventListener("click", ()=>{
+  pickFile(true, async files=>{
+    for(const f of files){
+      try{
+        const buf=await decodeBlob(f); const id="dw-"+uid();
+        await DB.put(id, f);
+        state.daw.push({ id, name:f.name.replace(/\.[^.]+$/,""), buffer:buf, duration:buf.duration, regIn:0, regOut:buf.duration });
+      }catch(e){ alert("Could not read "+f.name); }
+    }
+    if(state.dawSel<0 && state.daw.length) state.dawSel=0;
+    renderDaw(); saveMeta();
+  });
+});
+function selectDaw(i){ dawStop(); state.dawSel=i; const t=state.daw[i]; if(t) state.dawStartOff=t.regIn; $("#playhead").style.display="none"; renderDaw(); }
+function removeDaw(i){
+  dawStop(); const t=state.daw[i]; if(t) DB.del(t.id);
+  state.daw.splice(i,1);
+  if(state.dawSel>=state.daw.length) state.dawSel=state.daw.length-1;
+  renderDaw(); saveMeta();
+}
+
+const waveCanvas=$("#waveCanvas");
+function drawWave(){
+  const t=state.daw[state.dawSel]; if(!t) return;
+  const zone=$("#waveZone"); const w=zone.clientWidth, h=zone.clientHeight;
+  if(w===0||h===0) return;
+  const dpr=window.devicePixelRatio||1;
+  waveCanvas.width=w*dpr; waveCanvas.height=h*dpr;
+  const c=waveCanvas.getContext("2d"); c.scale(dpr,dpr);
+  c.clearRect(0,0,w,h);
+  const data=t.buffer.getChannelData(0); const mid=h/2;
+  const step=Math.max(1, Math.floor(data.length/w));
+  const accent=getComputedStyle(document.documentElement).getPropertyValue("--dim").trim()||"#888";
+  c.fillStyle=accent;
+  for(let x=0;x<w;x++){
+    let min=1,max=-1;
+    for(let j=0;j<step;j++){ const v=data[x*step+j]||0; if(v<min)min=v; if(v>max)max=v; }
+    const y1=mid+min*mid*0.92, y2=mid+max*mid*0.92;
+    c.fillRect(x, y1, 1, Math.max(1,y2-y1));
+  }
+}
+function timeToX(t){ const d=state.daw[state.dawSel]; const w=$("#waveZone").clientWidth; return (t/d.duration)*w; }
+function xToTime(x){ const d=state.daw[state.dawSel]; const w=$("#waveZone").clientWidth; return clamp((x/w)*d.duration,0,d.duration); }
+function updateRegionUI(){
+  const t=state.daw[state.dawSel]; if(!t) return;
+  const xi=timeToX(t.regIn), xo=timeToX(t.regOut);
+  $("#region").style.left=xi+"px"; $("#region").style.width=(xo-xi)+"px";
+  $("#handleIn").style.left=xi+"px"; $("#handleOut").style.left=xo+"px";
+  $("#infoIn").textContent=fmt(t.regIn); $("#infoOut").textContent=fmt(t.regOut);
+  $("#infoSec").textContent=fmt(t.regOut-t.regIn); $("#infoTot").textContent=fmt(t.duration);
+}
+/* drag region handles */
+function dragHandle(el, which){
+  el.addEventListener("pointerdown", e=>{
+    e.preventDefault(); el.setPointerCapture(e.pointerId);
+    const rect=$("#waveZone").getBoundingClientRect();
+    const move=ev=>{
+      const t=state.daw[state.dawSel]; if(!t) return;
+      const time=xToTime(ev.clientX-rect.left);
+      if(which==="in") t.regIn=clamp(time,0,t.regOut-0.05);
+      else t.regOut=clamp(time,t.regIn+0.05,t.duration);
+      updateRegionUI();
+    };
+    const up=()=>{ el.removeEventListener("pointermove",move); el.removeEventListener("pointerup",up); saveMeta(); };
+    el.addEventListener("pointermove",move); el.addEventListener("pointerup",up);
+  });
+}
+dragHandle($("#handleIn"),"in"); dragHandle($("#handleOut"),"out");
+/* tap on waveform to set playhead start (and seek) */
+$("#waveZone").addEventListener("pointerdown", e=>{
+  if(e.target.classList.contains("handle")) return;
+  const t=state.daw[state.dawSel]; if(!t) return;
+  const rect=$("#waveZone").getBoundingClientRect();
+  const time=clamp(xToTime(e.clientX-rect.left), t.regIn, t.regOut);
+  state.dawStartOff=time;
+  const ph=$("#playhead"); ph.style.display="block"; ph.style.left=timeToX(time)+"px";
+  $("#infoPos").textContent=fmt(time);
+});
+function dawPlay(){
+  const t=state.daw[state.dawSel]; if(!t) return;
+  ensureAudio(); actx.resume(); dawStopSourceOnly();
+  let off=state.dawStartOff; if(off<t.regIn||off>=t.regOut) off=t.regIn;
+  const src=actx.createBufferSource(); src.buffer=t.buffer;
+  if(state.dawLoop){ src.loop=true; src.loopStart=t.regIn; src.loopEnd=t.regOut; }
+  src.connect(master);
+  const dur = state.dawLoop? undefined : (t.regOut-off);
+  src.start(0, off, dur);
+  state.dawSource=src; state.dawStartCtx=actx.currentTime; state.dawStartOff=off;
+  src.onended=()=>{ if(state.dawSource===src){ dawStop(); } };
+  $("#playhead").style.display="block";
+  dawTick();
+  $("#dawPlay").innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>`;
+}
+function dawTick(){
+  const t=state.daw[state.dawSel]; if(!t||!state.dawSource){ return; }
+  let pos = state.dawStartOff + (actx.currentTime - state.dawStartCtx);
+  if(state.dawLoop && pos>t.regOut){ const span=t.regOut-t.regIn; pos=t.regIn+((pos-t.regIn)%span); }
+  $("#playhead").style.left=timeToX(pos)+"px";
+  $("#infoPos").textContent=fmt(pos);
+  state.dawRaf=requestAnimationFrame(dawTick);
+}
+function dawStopSourceOnly(){ if(state.dawSource){ try{ state.dawSource.onended=null; state.dawSource.stop(); }catch(e){} state.dawSource=null; } cancelAnimationFrame(state.dawRaf); }
+function dawStop(){
+  dawStopSourceOnly();
+  const t=state.daw[state.dawSel]; if(t){ state.dawStartOff=t.regIn; $("#playhead").style.left=timeToX(t.regIn)+"px"; $("#infoPos").textContent=fmt(t.regIn); }
+  $("#dawPlay").innerHTML=`<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg>`;
+}
+$("#dawPlay").addEventListener("click", ()=>{ if(state.dawSource) dawStop(); else dawPlay(); });
+$("#dawStop").addEventListener("click", dawStop);
+$("#dawLoop").addEventListener("click", function(){ state.dawLoop=!state.dawLoop; this.classList.toggle("on", state.dawLoop); if(state.dawSource){ dawStop(); dawPlay(); } });
+$("#dawFull").addEventListener("click", ()=>{ const t=state.daw[state.dawSel]; if(!t) return; t.regIn=0; t.regOut=t.duration; updateRegionUI(); saveMeta(); });
+
+/* ====================================================================
+   OPTIONS PAGE
+==================================================================== */
+function luminance(hex){ const c=hex.replace("#",""); const r=parseInt(c.substr(0,2),16)/255,g=parseInt(c.substr(2,2),16)/255,b=parseInt(c.substr(4,2),16)/255; const f=v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); return .2126*f(r)+.7152*f(g)+.0722*f(b); }
+function applySettings(){
+  const s=state.settings, r=document.documentElement.style;
+  const th=THEMES[s.theme]||THEMES.dark;
+  r.setProperty("--bg",th.bg); r.setProperty("--surface",th.surface); r.setProperty("--surface2",th.surface2);
+  r.setProperty("--border",th.border); r.setProperty("--text",th.text); r.setProperty("--dim",th.dim);
+  r.setProperty("--accent", s.accent);
+  r.setProperty("--accent-text", luminance(s.accent)>0.45? "#15130c":"#ffffff");
+  const ui = s.fontUI==="System"? "-apple-system,system-ui,sans-serif" : `'${s.fontUI}',sans-serif`;
+  const mo = s.fontMono==="System"? "ui-monospace,Menlo,monospace" : `'${s.fontMono}',monospace`;
+  r.setProperty("--font-ui", ui); r.setProperty("--font-mono", mo);
+  $("#masterVol").value = s.masterVol;
+}
+function buildOptions(){
+  const s=state.settings;
+  // themes
+  const tg=$("#themeGrid"); tg.innerHTML="";
+  Object.entries(THEMES).forEach(([k,t])=>{
+    const b=document.createElement("button"); b.className="theme-card"+(k===s.theme?" on":""); b.dataset.t=k;
+    b.innerHTML=`<div class="prev" style="background:${t.bg}"><i style="background:${t.surface}"></i><i style="background:${s.accent}"></i><i style="background:${t.surface2}"></i></div><div class="nm">${t.label}</div>`;
+    tg.appendChild(b);
+  });
+  // accent swatches
+  const sw=$("#accentSwatches"); sw.innerHTML="";
+  PALETTE.forEach(c=>{ const b=document.createElement("button"); b.className="swatch-btn"+(c.toLowerCase()===s.accent.toLowerCase()?" on":""); b.style.background=c; b.dataset.c=c; sw.appendChild(b); });
+  $("#accentCustom").value = s.accent;
+  // fonts
+  const fu=$("#fontUI"); fu.innerHTML=FONTS.map(f=>`<option ${f===s.fontUI?"selected":""}>${f}</option>`).join("");
+  const fm=$("#fontMono"); fm.innerHTML=MONO.map(f=>`<option ${f===s.fontMono?"selected":""}>${f}</option>`).join("");
+  // pad cols
+  $$("#padColsSeg button").forEach(b=>b.classList.toggle("on", +b.dataset.c===s.padCols));
+  // fade
+  $("#fadeTime").value=s.fadeTime; $("#fadeTimeVal").textContent=s.fadeTime.toFixed(1)+"s";
+  // exclusive
+  $("#exclusiveSw").classList.toggle("on", s.exclusive);
+}
+$("#themeGrid").addEventListener("click", e=>{ const b=e.target.closest(".theme-card"); if(!b) return; state.settings.theme=b.dataset.t; applySettings(); buildOptions(); saveMeta(); });
+$("#accentSwatches").addEventListener("click", e=>{ const b=e.target.closest(".swatch-btn"); if(!b) return; state.settings.accent=b.dataset.c; applySettings(); buildOptions(); saveMeta(); });
+$("#accentCustom").addEventListener("input", e=>{ state.settings.accent=e.target.value; applySettings(); buildOptions(); saveMeta(); });
+$("#fontUI").addEventListener("change", e=>{ state.settings.fontUI=e.target.value; applySettings(); saveMeta(); });
+$("#fontMono").addEventListener("change", e=>{ state.settings.fontMono=e.target.value; applySettings(); saveMeta(); });
+$("#padColsSeg").addEventListener("click", e=>{ const b=e.target.closest("button"); if(!b) return; state.settings.padCols=+b.dataset.c; buildOptions(); renderPads(); saveMeta(); });
+$("#fadeTime").addEventListener("input", e=>{ state.settings.fadeTime=+e.target.value; $("#fadeTimeVal").textContent=(+e.target.value).toFixed(1)+"s"; saveMeta(); });
+$("#exclusiveSw").addEventListener("click", function(){ state.settings.exclusive=!state.settings.exclusive; this.classList.toggle("on", state.settings.exclusive); saveMeta(); });
+$("#resetLook").addEventListener("click", ()=>{ const m=state.settings.masterVol; state.settings={...DEFAULT_SETTINGS, masterVol:m}; applySettings(); buildOptions(); renderPads(); saveMeta(); });
+$("#clearAll").addEventListener("click", ()=>{
+  confirmDialog("Clear everything?","This removes all pads, songs and tracks from this device. Appearance settings are kept.", async ()=>{
+    stopAllPads(); audio.pause(); audio.src=""; dawStop();
+    await DB.clear();
+    state.pads.forEach(p=>{ p.buffer=null; p.fileName=""; p.name=""; });
+    state.playlist.forEach(t=>{ if(t.url) URL.revokeObjectURL(t.url); }); state.playlist=[]; state.plIndex=-1;
+    state.daw=[]; state.dawSel=-1;
+    renderPads(); renderPlaylist(); renderDaw(); saveMeta();
+  });
+});
+
+/* ---------- confirm dialog ---------- */
+let cfCb=null;
+function confirmDialog(title,msg,cb){ $("#cfTitle").textContent=title; $("#cfMsg").textContent=msg; cfCb=cb; $("#confirmSheet").classList.add("on"); }
+$("#cfNo").addEventListener("click", ()=>{ $("#confirmSheet").classList.remove("on"); cfCb=null; });
+$("#cfYes").addEventListener("click", ()=>{ $("#confirmSheet").classList.remove("on"); if(cfCb) cfCb(); cfCb=null; });
+$$(".overlay").forEach(o=> o.addEventListener("click", e=>{ if(e.target===o) o.classList.remove("on"); }));
+
+/* ---------- resume audio on first touch (iOS) ---------- */
+document.addEventListener("pointerdown", ()=>{ try{ ensureAudio(); }catch(e){} }, {once:true});
+window.addEventListener("resize", ()=>{ if(state.page==="daw" && state.dawSel>=0){ drawWave(); updateRegionUI(); } });
+
+/* ---------- go ---------- */
+loadAll();
+</script>
+</body>
+</html>
