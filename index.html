@@ -98,7 +98,7 @@
   .pad .swatch{ position:absolute; bottom:0; left:0; right:0; height:5px; }
   .pad.dragging{ opacity:.4; }
   .pad.dragover{ box-shadow:inset 0 0 0 2px var(--accent); }
-  .ghost{ position:fixed; z-index:200; pointer-events:none; border-radius:var(--radius);
+  .drag-ghost{ position:fixed; z-index:200; pointer-events:none; border-radius:var(--radius);
     background:var(--surface2); border:1px solid var(--accent); display:grid; place-items:center;
     font-weight:600; font-size:13px; box-shadow:0 12px 30px rgba(0,0,0,.5); }
   .rearrange-hint{ padding:10px 16px; color:var(--accent); font-size:13px; text-align:center; }
@@ -200,6 +200,51 @@
   .empty-state p{ font-size:14px; }
   .hidden-input{ display:none; }
   .clip{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* ===== iPad / older-Safari compatibility ===== */
+  /* file picker must NOT be display:none or iOS won't open it */
+  .hidden-input{ position:fixed !important; left:-9999px; top:0; width:1px; height:1px; opacity:0; display:block !important; }
+
+  /* keep button icons small regardless of Safari quirks */
+  .btn > svg, nav button > svg{ flex:none; }
+  .bar .btn > svg, .sheet-actions .btn > svg{ width:18px !important; height:18px !important; }
+
+  /* spacing that does NOT depend on flexbox "gap" (jammed/overlapping fix) */
+  .bar{ gap:0; }
+  .bar > *{ margin:4px 10px 4px 0; }
+  .bar > *:last-child{ margin-right:0; }
+  nav{ gap:0; }
+  nav button{ margin-left:8px; }
+  nav button:first-child{ margin-left:0; }
+  .brand{ gap:0; }
+  .brand .dot{ margin-right:9px; }
+  .brand .page-title{ margin-left:8px; }
+  .sheet-actions{ gap:0; }
+  .sheet-actions .btn{ margin-right:10px; }
+  .sheet-actions .btn:last-child{ margin-right:0; }
+  .transport{ gap:0; }
+  .transport > *{ margin:0 8px; }
+  .seek{ gap:0; }
+  .seek > *{ margin:0 6px; }
+  .seek > *:first-child{ margin-left:0; }
+  .seek > *:last-child{ margin-right:0; }
+  .vol{ gap:0; }
+  .vol > *{ margin:0 5px; }
+  .vol > *:first-child{ margin-left:0; }
+  .row{ gap:0; }
+  .row > *{ margin:0 6px; }
+  .row > *:first-child{ margin-left:0; }
+  .row > *:last-child{ margin-right:0; }
+  .swatches, .colorrow{ gap:0; }
+  .swatches > *, .colorrow > *{ margin:0 10px 10px 0; }
+  .daw-info{ gap:0; }
+  .daw-info > *{ margin:0 18px 0 0; }
+  .daw-side .trk{ gap:0; }
+  .daw-side .trk > *{ margin-right:8px; }
+  .daw-side .trk > *:last-child{ margin-right:0; }
+
+  /* square pads even on Safari without aspect-ratio support */
+  @supports not (aspect-ratio: 1 / 1){ .pad{ min-height:96px; } }
 </style>
 </head>
 <body>
@@ -370,7 +415,7 @@
   </div>
 </div>
 
-<input type="file" accept="audio/*" class="hidden-input" id="fileInput">
+<input type="file" accept="audio/*,.mp3,.m4a,.wav,.aac,.flac,.ogg,.aiff,.caf" class="hidden-input" id="fileInput">
 
 <script>
 "use strict";
@@ -604,7 +649,7 @@ padGrid.addEventListener("pointerdown", e=>{
   const padEl=e.target.closest(".pad"); if(!padEl) return;
   e.preventDefault();
   const i=+padEl.dataset.i; const r=padEl.getBoundingClientRect();
-  const ghost=document.createElement("div"); ghost.className="ghost";
+  const ghost=document.createElement("div"); ghost.className="drag-ghost";
   ghost.style.width=r.width+"px"; ghost.style.height=r.height+"px";
   ghost.textContent = state.pads[i].name || (state.pads[i].buffer? "Pad "+(i+1):"empty");
   document.body.appendChild(ghost);
