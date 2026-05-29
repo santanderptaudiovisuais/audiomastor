@@ -32,8 +32,12 @@
   header{
     display:flex; align-items:center; justify-content:space-between;
     padding:10px 16px; border-bottom:1px solid var(--border); background:var(--surface);
-    gap:12px; flex:none;
+    gap:12px; flex:none; position:relative;
   }
+  .clock{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; pointer-events:none; }
+  .clock .clk-time{ font-family:var(--font-mono); font-size:22px; font-weight:700; letter-spacing:.04em; color:var(--text); line-height:1; }
+  .clock .clk-zone{ font-size:10px; color:var(--dim); margin-top:2px; letter-spacing:.08em; text-transform:uppercase; }
+  @media (max-width:680px){ .clock .clk-time{ font-size:17px; } .brand-credit{ display:none; } }
   .brand{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-.02em; }
   .brand .dot{ width:11px; height:11px; border-radius:50%; background:var(--accent); }
   .brand .logo{ width:34px; height:34px; display:inline-flex; }
@@ -117,11 +121,17 @@
 
   /* vertical glowing volume fader on the left */
   .pad-fader{ position:absolute; left:5px; top:24px; bottom:24px; width:30px; cursor:pointer; touch-action:none; z-index:3; }
-  .pad-fader .track{ position:absolute; left:50%; transform:translateX(-50%); top:0; bottom:0; width:12px; border-radius:6px; background:rgba(127,127,127,.16); box-shadow:inset 0 0 0 1px rgba(127,127,127,.28); overflow:hidden; }
-  .pad-fader .fill{ position:absolute; left:0; right:0; bottom:0; height:0%; border-radius:6px;
-    background:var(--accent);
-    box-shadow:0 0 6px var(--accent), 0 0 14px var(--accent), 0 0 22px var(--accent), inset 0 0 6px rgba(255,255,255,.35);
-    filter:saturate(1.3) brightness(1.12); }
+  .pad-fader .track{ position:absolute; left:50%; transform:translateX(-50%); top:0; bottom:0; width:10px; border-radius:5px; background:rgba(127,127,127,.12); box-shadow:inset 0 0 0 1px rgba(127,127,127,.22); overflow:visible; }
+  .pad-fader .fill{ position:absolute; left:0; right:0; bottom:0; height:0%; border-radius:5px;
+    background:var(--accent); opacity:.7;
+    box-shadow:0 0 8px var(--accent), 0 0 16px var(--accent), 0 0 28px var(--accent);
+    filter:brightness(1.25) saturate(1.2); }
+  @supports (background:color-mix(in srgb, red 50%, transparent)){
+    .pad-fader .fill{ opacity:1;
+      background:linear-gradient(to top, color-mix(in srgb, var(--accent) 55%, transparent), color-mix(in srgb, var(--accent) 80%, transparent));
+      box-shadow:0 0 8px var(--accent), 0 0 16px var(--accent), 0 0 28px var(--accent), 0 0 40px color-mix(in srgb, var(--accent) 60%, transparent); }
+  }
+  .pad-fader .fill::before{ content:''; position:absolute; left:50%; top:0; bottom:0; width:2px; transform:translateX(-50%); background:#fff; opacity:.85; filter:blur(.5px); box-shadow:0 0 6px #fff; border-radius:2px; }
   .pad-fader .unity{ position:absolute; left:50%; transform:translateX(-50%); width:18px; height:2px; background:var(--dim); opacity:.6; border-radius:1px; }
   .pad-fader .knob{ position:absolute; left:50%; transform:translate(-50%,50%); width:26px; height:14px; border-radius:5px; background:var(--text);
     box-shadow:0 1px 4px rgba(0,0,0,.55), 0 0 8px var(--accent); bottom:0%; }
@@ -176,24 +186,26 @@
   .pad-transport{ display:flex; align-items:center; flex:none; }
   .pad-transport > *{ margin:0 5px; }
   .pad-transport .btn.icon{ width:38px; height:38px; }
-  .play-btn{ width:46px; height:46px; background:#2ecc71; border-color:#2ecc71; color:#0c2a17; }
-  .play-btn svg{ width:20px; height:20px; }
-  .play-btn:active{ background:#28b463; }
-  .stop-btn{ background:#ff5d5d; border-color:#ff5d5d; color:#3a0d0d; }
-  .stop-btn:active{ background:#e54b4b; }
+  .pad-transport .play-btn{ width:72px; height:72px; padding:0; justify-content:center; background:#2ecc71; border-color:#2ecc71; color:#0c2a17; }
+  .pad-transport .play-btn svg{ width:32px; height:32px; }
+  .pad-transport .play-btn:active{ background:#28b463; }
+  .pad-transport .stop-btn{ width:64px; height:64px; padding:0; justify-content:center; background:#ff5d5d; border-color:#ff5d5d; color:#3a0d0d; }
+  .pad-transport .stop-btn svg{ width:28px; height:28px; }
+  .pad-transport .stop-btn:active{ background:#e54b4b; }
+  .loop-btn{ background:var(--surface2); border-color:var(--border); color:var(--dim); }
+  .loop-btn.on{ background:#2f7bff; border-color:#2f7bff; color:#fff; box-shadow:0 0 12px -1px #2f7bff; }
   .pad.tap-armed{ box-shadow:inset 0 0 0 2px var(--accent); }
-  .fadeout-btn{ position:relative; overflow:hidden; height:38px; padding:0 14px; font-size:13px; border-radius:19px; }
+  .fadeout-btn{ position:relative; overflow:hidden; height:40px; padding:0 16px; font-size:14px; font-weight:600; border-radius:20px; margin-left:34px !important; color:var(--accent); border-color:var(--accent); }
   .fadeout-btn.active{ background:var(--accent); border-color:var(--accent); color:var(--accent-text); box-shadow:0 0 14px -2px var(--accent); }
   .fadeout-btn .cooldown{ position:absolute; inset:0; pointer-events:none; display:none; z-index:0;
     background:conic-gradient(rgba(0,0,0,.45) var(--cd,0%), transparent 0); }
   .fadeout-btn.active .cooldown{ display:block; }
-  .fadeout-btn svg{ width:18px; height:18px; position:relative; z-index:1; }
+  .fadeout-btn svg{ width:18px; height:18px; position:relative; z-index:1; stroke:var(--accent); }
+  .fadeout-btn.active svg{ stroke:var(--accent-text); }
   .fadeout-btn{ z-index:0; }
   .fadeout-btn > *:not(.cooldown){ position:relative; z-index:1; }
   .pad-vol{ display:flex; align-items:center; flex:none; }
   .pad-vol > *{ margin:0 6px; }
-  .loop-btn{ background:var(--surface2); border-color:var(--border); color:var(--dim); }
-  .loop-btn.on{ background:#2f7bff; border-color:#2f7bff; color:#fff; box-shadow:0 0 12px -1px #2f7bff; }
   .hfader{ position:relative; width:210px; height:22px; cursor:pointer; touch-action:none; display:flex; align-items:center; }
   .hfader .track{ position:relative; width:100%; height:8px; border-radius:5px; background:rgba(127,127,127,.16); box-shadow:inset 0 0 0 1px rgba(127,127,127,.28); overflow:hidden; }
   .hfader .fill{ position:absolute; left:0; top:0; bottom:0; width:100%; border-radius:5px;
@@ -328,6 +340,7 @@
 <div id="app">
   <header>
     <div class="brand"><span class="logo"><svg viewBox="0 0 48 48"><rect class="lg-bg" x="2" y="2" width="44" height="44" rx="11"/><text class="lg-fg" x="24" y="22" font-size="17" font-weight="700" text-anchor="middle">AM</text><g class="lg-fg"><rect x="13" y="30" width="3" height="6" rx="1.5"/><rect x="19" y="27" width="3" height="12" rx="1.5"/><rect x="25.5" y="29" width="3" height="8" rx="1.5"/><rect x="32" y="26" width="3" height="14" rx="1.5"/></g></svg></span><span class="brand-text"><span class="brand-name">Audiomastor <span class="page-title" id="pageTitle">Pads</span></span><span class="brand-credit">Made by Santini (Beta Version 0.8)</span></span></div>
+    <div class="clock" id="clock"><span class="clk-time" id="clkTime">--:--:--</span><span class="clk-zone">Lisbon</span></div>
     <nav id="nav">
       <button data-page="pads" class="on" aria-label="Pads"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
       <button data-page="playlist" aria-label="Playlist"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="15" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="11" y2="18"/><circle cx="18" cy="16" r="3"/><line x1="21" y1="16" x2="21" y2="7"/></svg></button>
@@ -352,10 +365,10 @@
         <div class="pad-controls">
           <div class="pad-now"><span class="pn-title" id="padNowTitle">No pad playing</span><span class="pn-time"><span id="padCur">0:00</span> / <span id="padDur">0:00</span></span></div>
           <div class="pad-transport">
-            <button class="btn icon round play-btn" id="padPlay" title="Play / pause"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg></button>
-            <button class="btn icon round stop-btn" id="padStopBtn" title="Stop"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
-            <button class="btn fadeout-btn" id="fadeBtn" title="Force fade out the playing pad"><span class="cooldown" id="fadeCooldown"></span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="4" y2="18"/><line x1="9" y1="8" x2="9" y2="16"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="19" y1="11.5" x2="19" y2="12.5"/></svg>Force fade out</button>
+            <button class="btn round play-btn" id="padPlay" title="Play / pause"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20"/></svg></button>
+            <button class="btn round stop-btn" id="padStopBtn" title="Stop"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg></button>
             <button class="btn icon round loop-btn" id="padLoopBtn" title="Loop the playing pad"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
+            <button class="btn fadeout-btn" id="fadeBtn" title="Force fade out the playing pad"><span class="cooldown" id="fadeCooldown"></span><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="4" y2="18"/><line x1="9" y1="8" x2="9" y2="16"/><line x1="14" y1="10" x2="14" y2="14"/><line x1="19" y1="11.5" x2="19" y2="12.5"/></svg>FFO</button>
           </div>
           <div class="pad-vol">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--dim)" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M19 5a9 9 0 0 1 0 14M15.5 8.5a4 4 0 0 1 0 7"/></svg>
@@ -490,7 +503,7 @@
     <div class="field"><label>Color</label><div class="colorrow" id="psColors"></div></div>
     <div class="field toggle"><span>Loop</span><button class="switch" id="psLoop"><i></i></button></div>
     <div class="field toggle"><span>Tap again to stop</span><button class="switch" id="psToggle"><i></i></button></div>
-    <div class="field"><label>Volume</label><input type="range" id="psGain" min="0" max="3.162" step="0.01" style="width:100%"></div>
+    <div class="field"><label>Volume</label><input type="range" id="psGain" min="0" max="7.94" step="0.01" style="width:100%"></div>
     <div class="sheet-actions">
       <button class="btn ghost" id="psLoad"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" width="16" height="16"><path d="M12 5v14M5 12h14"/></svg>Load audio</button>
       <button class="btn ghost" id="psRemove" style="color:#ff6b6b">Clear pad</button>
@@ -574,19 +587,19 @@ async function decodeBlob(blob){
 
 /* ---------- App state ---------- */
 const PALETTE = ["#ff7a45","#ffd23f","#3ddc97","#4cc9f0","#b388ff","#f15bb5","#ff5d5d","#9ee493"];
-// Fader maps position 0..1 to gain, with +10 dB of headroom above unity.
-const GAIN_MAX = Math.pow(10, 10/20); // +10 dB ≈ 3.162x
-const UNITY_POS = Math.log10(1/GAIN_MAX) / (-Math.log10(GAIN_MAX)/1) ; // not used directly
-function posToGain(pos){ // pos 0..1 -> linear gain 0..GAIN_MAX, with pos for unity at log point
+// Fader maps position 0..1 to gain. Range: -40 dB (bottom) to +18 dB (top),
+// so unity (0 dB, the default) sits at ~58% up the track, leaving headroom to boost.
+const DB_MIN = -40, DB_MAX = 18, DB_SPAN = DB_MAX - DB_MIN;
+const GAIN_MAX = Math.pow(10, DB_MAX/20);
+function posToGain(pos){
   if(pos<=0) return 0;
-  // dB scale from -60 dB (pos→0) up to +10 dB (pos=1)
-  const db = -60 + pos*70;
+  const db = DB_MIN + pos*DB_SPAN;
   return Math.pow(10, db/20);
 }
 function gainToPos(g){
   if(g<=0) return 0;
   const db = 20*Math.log10(g);
-  return clamp((db+60)/70, 0, 1);
+  return clamp((db-DB_MIN)/DB_SPAN, 0, 1);
 }
 const UNITY_FRAC = gainToPos(1); // fraction of track where 0 dB sits (~0.857)
 const FONTS = ["Sora","Outfit","DM Sans","Chivo","Fraunces","System"];
@@ -845,7 +858,7 @@ function drawPadWave(){
   const i=state.activePad, p=i>=0?state.pads[i]:null;
   if(!p||!p.buffer||w===0) return;
   const data=p.buffer.getChannelData(0), mid=h/2, step=Math.max(1,Math.floor(data.length/w));
-  c.fillStyle=(getComputedStyle(document.documentElement).getPropertyValue("--dim")||"#888").trim();
+  c.fillStyle=(getComputedStyle(document.documentElement).getPropertyValue("--accent")||"#ff7a45").trim();
   for(let x=0;x<w;x++){
     let mn=1,mx=-1;
     for(let j=0;j<step;j++){ const v=data[x*step+j]||0; if(v<mn)mn=v; if(v>mx)mx=v; }
@@ -1360,6 +1373,7 @@ function applySettings(){
   const mo = s.fontMono==="System"? "ui-monospace,Menlo,monospace" : `'${s.fontMono}',monospace`;
   r.setProperty("--font-ui", ui); r.setProperty("--font-mono", mo);
   const mf=$("#masterVol"); if(mf){ const v=s.masterVol; mf.dataset.val=v; mf.querySelector(".fill").style.width=(v*100).toFixed(1)+"%"; mf.querySelector(".knob").style.left=(v*100).toFixed(1)+"%"; }
+  if(state.page==="pads" && typeof drawPadWave==="function") drawPadWave();
 }
 function buildOptions(){
   const s=state.settings;
@@ -1422,6 +1436,17 @@ document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) resumeA
 window.addEventListener("focus", resumeAudio);
 window.addEventListener("pageshow", resumeAudio);
 window.addEventListener("resize", ()=>{ if(state.page==="daw" && state.dawSel>=0){ drawWave(); updateRegionUI(); } if(state.page==="pads") drawPadWave(); });
+
+/* ---------- Lisbon clock (24h) ---------- */
+function tickClock(){
+  try{
+    const s=new Intl.DateTimeFormat("en-GB",{ timeZone:"Europe/Lisbon", hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false }).format(new Date());
+    $("#clkTime").textContent=s;
+  }catch(e){
+    const d=new Date(); $("#clkTime").textContent=[d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,"0")).join(":");
+  }
+}
+tickClock(); setInterval(tickClock, 1000);
 
 /* ---------- go ---------- */
 loadAll();
