@@ -60,6 +60,17 @@
   .page{ position:absolute; inset:0; display:none; flex-direction:column; }
   .page.on{ display:flex; }
   .scroll{ overflow:auto; -webkit-overflow-scrolling:touch; flex:1; padding:16px; }
+  /* slide-in settings panel */
+  .settings-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.35); opacity:0; pointer-events:none; transition:opacity .22s; z-index:90; }
+  .settings-backdrop.on{ opacity:1; pointer-events:auto; }
+  .settings-panel{ position:fixed; top:0; right:0; bottom:0; width:50%; max-width:560px; min-width:320px;
+    background:var(--surface); border-left:1px solid var(--border); box-shadow:-12px 0 40px rgba(0,0,0,.4);
+    transform:translateX(100%); transition:transform .26s cubic-bezier(.4,0,.2,1); z-index:91; display:flex; flex-direction:column;
+    padding-top:env(safe-area-inset-top); }
+  .settings-panel.on{ transform:translateX(0); }
+  .settings-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); font-weight:700; font-size:17px; flex:none; }
+  .settings-head .btn.icon{ width:38px; height:38px; }
+  @media (max-width:680px){ .settings-panel{ width:88%; } }
 
   /* ---- Shared controls ---- */
   .bar{
@@ -110,7 +121,7 @@
   .pad.loadable{ cursor:pointer; border-style:dashed; border-color:var(--accent); }
   .pad.loadable .empty svg, .pad.loadable .empty{ color:var(--accent); stroke:var(--accent); }
   /* segmented mixer-style stereo VU (2 columns) on the right */
-  .pad .vu{ position:absolute; right:7px; top:24px; height:46%; width:16px; display:none; gap:3px; padding:2px;
+  .pad .vu{ position:absolute; right:7px; top:52px; height:38%; width:16px; display:none; gap:3px; padding:2px;
     border-radius:3px; background:rgba(127,127,127,.10); box-shadow:inset 0 0 0 1px rgba(127,127,127,.22); }
   .pad.playing .vu{ display:flex; }
   .pad .vu .vucol{ flex:1; display:flex; flex-direction:column-reverse; gap:2px; }
@@ -120,7 +131,7 @@
   .pad .vu .seg.on-r{ background:#ff5d5d; box-shadow:0 0 4px #ff5d5d; }
 
   /* vertical volume fader on the left — subtle pad-colored glow */
-  .pad-fader{ position:absolute; left:5px; top:24px; bottom:30px; width:30px; cursor:pointer; touch-action:none; z-index:3; --fglow:0.6; }
+  .pad-fader{ position:absolute; left:5px; top:46px; bottom:30px; width:30px; cursor:pointer; touch-action:none; z-index:3; --fglow:0.6; }
   .pad-fader .track{ position:absolute; left:50%; transform:translateX(-50%); top:0; bottom:0; width:10px; border-radius:5px; background:rgba(127,127,127,.12); box-shadow:inset 0 0 0 1px rgba(127,127,127,.22); overflow:visible; }
   .pad-fader .fill{ position:absolute; left:0; right:0; bottom:0; height:0%; border-radius:5px;
     background:var(--fcol,var(--accent));
@@ -447,7 +458,7 @@
     </section>
 
     <!-- OPTIONS -->
-    <section class="page" id="page-options">
+    <div id="optionsContent" style="display:none">
       <div class="scroll">
         <div class="opt-section">
           <h3>Theme</h3>
@@ -490,8 +501,16 @@
         </div>
         <div style="text-align:center; color:var(--dim); font-size:12px; padding:10px 0 30px;">Audiomastor · runs fully offline on your device</div>
       </div>
-    </section>
+    </div>
   </main>
+  <div class="settings-backdrop" id="settingsBackdrop"></div>
+  <aside class="settings-panel" id="settingsPanel" aria-hidden="true">
+    <div class="settings-head">
+      <span>Settings</span>
+      <button class="btn icon ghost" id="settingsClose" aria-label="Close settings"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="scroll" id="settingsScroll"></div>
+  </aside>
 </div>
 
 <!-- Pad settings sheet -->
@@ -539,6 +558,12 @@
 /* ---------- tiny helpers ---------- */
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+// Move Settings content into the slide-in panel before anything queries it.
+(function relocateSettings(){
+  const src=document.getElementById("optionsContent");
+  const dest=document.getElementById("settingsScroll");
+  if(src && dest){ const inner=src.querySelector(".scroll"); if(inner){ while(inner.firstChild) dest.appendChild(inner.firstChild); } src.remove(); }
+})();
 const uid = () => Math.random().toString(36).slice(2,10);
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
 const fmt = (s)=>{ if(!isFinite(s)||s<0) s=0; const m=Math.floor(s/60), x=Math.floor(s%60); return m+":"+String(x).padStart(2,"0"); };
@@ -676,16 +701,34 @@ async function loadAll(){
 /* ====================================================================
    NAV
 ==================================================================== */
-const TITLES = { pads:"Pads", playlist:"Playlist", daw:"Waveform", options:"Options" };
+const TITLES = { pads:"Pads", playlist:"Playlist", daw:"Waveform" };
 function goPage(p){
   state.page=p;
   $$(".page").forEach(s=>s.classList.toggle("on", s.id==="page-"+p));
-  $$("#nav button").forEach(b=>b.classList.toggle("on", b.dataset.page===p));
-  $("#pageTitle").textContent = TITLES[p];
+  $$('#nav button:not([data-page="options"])').forEach(b=>b.classList.toggle("on", b.dataset.page===p));
+  $("#pageTitle").textContent = TITLES[p]||"";
   if(p==="daw" && state.dawSel>=0){ drawWave(); updateRegionUI(); }
   if(p==="pads") drawPadWave();
 }
-$("#nav").addEventListener("click", e=>{ const b=e.target.closest("button"); if(b) goPage(b.dataset.page); });
+function openSettings(){
+  $("#settingsPanel").classList.add("on");
+  $("#settingsBackdrop").classList.add("on");
+  $("#settingsPanel").setAttribute("aria-hidden","false");
+  $$('#nav button[data-page="options"]').forEach(b=>b.classList.add("on"));
+}
+function closeSettings(){
+  $("#settingsPanel").classList.remove("on");
+  $("#settingsBackdrop").classList.remove("on");
+  $("#settingsPanel").setAttribute("aria-hidden","true");
+  $$('#nav button[data-page="options"]').forEach(b=>b.classList.remove("on"));
+}
+$("#nav").addEventListener("click", e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.page==="options"){ if($("#settingsPanel").classList.contains("on")) closeSettings(); else openSettings(); }
+  else { closeSettings(); goPage(b.dataset.page); }
+});
+$("#settingsClose").addEventListener("click", closeSettings);
+$("#settingsBackdrop").addEventListener("click", closeSettings);
 
 /* ====================================================================
    FILE PICKER (shared)
